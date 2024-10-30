@@ -1,6 +1,78 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 220 3% 11%;
+    
+    --card: 0 0% 99%;
+    --card-foreground: 220 3% 11%;
+ 
+    --popover: 0 0% 99%;
+    --popover-foreground: 220 3% 11%;
+ 
+    --primary: 4 87% 57%; /* #F04132 coral */
+    --primary-foreground: 0 0% 99%;
+ 
+    --secondary: 207 69% 15%; /* #0D2940 azul oscuro */
+    --secondary-foreground: 0 0% 99%;
+ 
+    --muted: 220 3% 11%;
+    --muted-foreground: 0 0% 99%;
+ 
+    --accent: 11 96% 70%;
+    --accent-foreground: 220 3% 11%;
+ 
+    --destructive: 4 87% 57%;
+    --destructive-foreground: 0 0% 99%;
+
+    --border: 201 100% 30%;
+    --input: 201 100% 30%;
+    --ring: 201 100% 30%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 220 3% 11%;
+    --foreground: 0 0% 99%;
+ 
+    --card: 220 3% 11%;
+    --card-foreground: 0 0% 99%;
+ 
+    --popover: 220 3% 11%;
+    --popover-foreground: 0 0% 99%;
+ 
+    --primary: 4 87% 57%; /* Mantener el coral como primario en modo oscuro */
+    --primary-foreground: 0 0% 99%;
+ 
+    --secondary: 207 69% 15%;
+    --secondary-foreground: 0 0% 99%;
+ 
+    --muted: 220 3% 11%;
+    --muted-foreground: 0 0% 99%;
+ 
+    --accent: 11 96% 70%;
+    --accent-foreground: 220 3% 11%;
+ 
+    --destructive: 4 87% 57%;
+    --destructive-foreground: 0 0% 99%;
+ 
+    --border: 201 100% 30%;
+    --input: 201 100% 30%;
+    --ring: 201 100% 30%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
  
 @layer base {
   :root {
