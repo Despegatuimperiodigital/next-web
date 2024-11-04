@@ -11,6 +11,9 @@ import { motion } from 'framer-motion'
 import ElegantHeroSection from './components/home/Home'
 import ServicesSection from './components/home/Servicios'
 import BlogSection from './components/home/BlogSection'
+import Contacto from './components/home/Contact'
+import Footer from './components/home/Footer'
+import EnhancedFeedbackButton from './components/suportchat/Supportchat.jsx'
 
 
 export default function LandingPage() {
@@ -24,6 +27,9 @@ export default function LandingPage() {
         <ElegantHeroSection />
         <ServicesSection />
         <BlogSection />
+        <Contacto/>
+        <Footer/>
+        <EnhancedFeedbackButton/>
         {isMenuOpen && (
           <div className="fixed inset-0 bg-background z-20 md:hidden">
             <div className="flex flex-col items-center justify-center h-full space-y-8">

@@ -15,7 +15,8 @@ export default function BlogSection() {
   const apiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL;
 
   const handlePostClick = (slug) => {
-    router.push(`/blog/${slug}`);
+    router.push(`pages/blog/${slug}`)
+    console.log(slug)
   };
 
   useEffect(() => {
