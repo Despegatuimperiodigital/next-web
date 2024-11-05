@@ -1,250 +1,256 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Send, ArrowRight } from 'lucide-react'
-import Image from 'next/image'
+import { ChevronLeft, ChevronRight, Shield, Cog, BarChart } from 'lucide-react'
 import { Button } from "../ui/button"
-import { Input } from "../ui/input"
+import Image from 'next/image'
+import Modal from '../ui/Modal'
+import SuccessMessage from '../ui/Confirmacion'
 
-const businessChallenges = [
-  { icon: "📊", title: "Optimizar procesos" },
-  { icon: "🤝", title: "Experiencia del cliente" },
-  { icon: "🔒", title: "Seguridad de datos" },
-  { icon: "🚀", title: "Escalar infraestructura" },
-  { icon: "🧠", title: "Soluciones de IA" },
-  { icon: "💡", title: "Innovación de productos" }
-]
 
-const trustedCompanies = [
-  { name: "TechNova", logo: "/placeholder.svg?height=30&width=100", industry: "Tecnología" },
-  { name: "FinEdge", logo: "/placeholder.svg?height=30&width=100", industry: "Finanzas" },
-  { name: "EcoSmart", logo: "/placeholder.svg?height=30&width=100", industry: "Sostenibilidad" },
-  { name: "Decohaus", logo: "/placeholder.svg?height=30&width=100", industry: "Comercio" },
-  { name: "Cruzeiro", logo: "https://images.jumpseller.com/store/cruzeiro-gomas/store/logo/Captura_de_pantalla_2024-08-20_a_la_s__10.02.46.png", industry: "Comercio" },
-  { name: "CISS", logo: "https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_300/https://ciss.cl/wp-content/uploads/2021/12/Logo-CISS-1.png", industry: "Inmobiliaria" }
-]
+import DiagnosticForm from './DiagnosticForm'
 
-export default function ElegantHeroSection() {
-  const [userQuery, setUserQuery] = useState("")
-  const [conversation, setConversation] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [showChat, setShowChat] = useState(false)
-  const chatEndRef = useRef(null)
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [conversation])
-
-  const handleChallengeSelect = (challenge) => {
-    setShowChat(true)
-    handleSubmit(challenge)
+const services = [
+  {
+    title: "Rendimiento Inquebrantable para tu Sitio Web",
+    description: "Mantenemos tu plataforma funcionando a máxima velocidad mientras tú te enfocas en crecer. Optimización continua para sitios que no pueden permitirse caídas.",
+    icon: Shield,
+    stats: "99.9% de uptime garantizado",
+    highlight: "Soporte 24/7 proactivo",
+    points: ["Optimización constante de rendimiento", "Monitoreo en tiempo real", "Respaldo automático"],
+    cta: "Garantiza la disponibilidad de tu sitio",
+    tags: ["Confiabilidad", "Alto Rendimiento"],
+    subtext: "Respaldando sitios con millones de visitas mensuales"
+  },
+  {
+    title: "Integración Perfecta de Tus Sistemas Empresariales",
+    description: "Conectamos tus herramientas críticas en un ecosistema digital fluido. Automatización inteligente que elimina silos y multiplica la productividad.",
+    icon: Cog,
+    stats: "Hasta 60% menos tiempo en procesos manuales",
+    highlight: "Integración seamless de CRM/ERP",
+    points: ["Automatización de procesos clave", "Sistemas personalizados", "Escalabilidad garantizada"],
+    cta: "Moderniza tu infraestructura digital",
+    tags: ["Personalización", "Escalabilidad"],
+    subtext: "Transformando procesos en más de 500 empresas"
+  },
+  {
+    title: "Datos que Impulsan Decisiones Ganadoras",
+    description: "Convertimos tus datos en una ventaja competitiva real. Implementación experta de Google Analytics 4, Tag Manager y Google Ads para maximizar cada inversión.",
+    icon: BarChart,
+    stats: "Mejora del 40% en ROAS promedio",
+    highlight: "Seguimiento preciso de conversiones",
+    points: ["Atribución multi-canal", "Reportes personalizados", "Optimización de ROI"],
+    cta: "Potencia tus decisiones con datos reales",
+    tags: ["Precisión", "ROI Maximizado"],
+    subtext: "Gestionando datos de conversiones por millones de dólares"
   }
+]
 
-  const handleSubmit = async (query) => {
-    if (query.trim()) {
-      setConversation(prev => [...prev, { type: 'user', content: query }])
+const HeroCarousel = () => {
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [direction, setDirection] = useState(0)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+    const [isSuccess, setIsSuccess] = useState(false)
+  
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setDirection(1)
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % services.length)
+      }, 5000)
+  
+      return () => clearInterval(timer)
+    }, [])
+  
+    const handleDiagnosticSubmit = async (data) => {
       setIsLoading(true)
-      setUserQuery("")
-
       try {
-        const response = await fetch('https://api.cloudhub.cl/api/despega-ai/crear', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ searchText: query })
-        })
-
-        if (!response.ok) {
-          throw new Error('Error en la solicitud al servidor')
-        }
-
-        const data = await response.json()
-        setConversation(prev => [...prev, { type: 'bot', content: data.message }])
+        // Aquí iría tu lógica de envío de datos
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        setIsSuccess(true)
       } catch (error) {
         console.error('Error:', error)
-        setConversation(prev => [...prev, { 
-          type: 'bot', 
-          content: 'Hubo un error al procesar su consulta. Intente nuevamente más tarde.' 
-        }])
+      } finally {
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     }
+  
+    const handleModalClose = () => {
+      setIsModalOpen(false)
+      setTimeout(() => {
+        setIsSuccess(false)
+      }, 300)
+    }
+
+  const nextSlide = () => {
+    setDirection(1)
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % services.length)
   }
 
-  const titleWords = "Eleve su Visión Empresarial con CloudHub".split(" ")
+  const prevSlide = () => {
+    setDirection(-1)
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + services.length) % services.length)
+  }
+
+  const slideVariants = {
+    enter: (direction) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0
+    })
+  }
+
+  const swipeConfidenceThreshold = 10000
+  const swipePower = (offset, velocity) => {
+    return Math.abs(offset) * velocity
+  }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
-      <div className="absolute inset-0">
-        <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/document-pveiX76s4q42lmGwQ2odGa3He7XWwQ.jpeg"
-          alt="Cityscape with cloud technology"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40" />
-      </div>
+    <div className="relative h-screen w-full overflow-hidden">
+      <Image
+        src="https://team.cloudhub.cl/wp-content/uploads/2024/11/Leonardo_Phoenix_Futuristic_digital_highway_floating_in_cybers_1.jpg"
+        alt="Fondo digital"
+        layout="fill"
+        objectFit="cover"
+        quality={100}
+        priority
+      />
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
+      <div className="relative z-10 h-full flex items-center justify-center">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={currentIndex}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = swipePower(offset.x, velocity.x)
 
-      <div className="relative z-10 max-w-7xl w-full mx-auto space-y-10">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center space-y-4"
-        >
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white font-nunito mt-14">
-            {titleWords.map((word, i) => (
-              <motion.span
-                key={i}
-                className="inline-block mr-2"
-                initial={{ opacity: 0, filter: "blur(8px)" }}
-                animate={{ 
-                  opacity: 1, 
-                  filter: "blur(0px)",
-                  y: [0, -4, 0]
-                }}
-                transition={{
-                  opacity: { duration: 1, delay: i * 0.2 },
-                  filter: { duration: 1, delay: i * 0.2 },
-                  y: {
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    duration: 2,
-                    delay: i * 0.1,
-                    ease: "easeInOut"
-                  }
-                }}
-              >
-                {word}
-              </motion.span>
-            ))}
-          </h1>
-          <motion.p 
-            className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: titleWords.length * 0.2 }}
+              if (swipe < -swipeConfidenceThreshold) {
+                nextSlide()
+              } else if (swipe > swipeConfidenceThreshold) {
+                prevSlide()
+              }
+            }}
+            className="text-center px-4 md:px-8 max-w-5xl mx-auto absolute w-full"
           >
-            Descubra soluciones cloud vanguardistas para potenciar la innovación y el crecimiento sostenible.
-          </motion.p>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 max-w-3xl mx-auto shadow-2xl"
-        >
-          {!showChat ? (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-white text-center font-nunito">
-                ¿Qué desafío empresarial le gustaría abordar?
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {businessChallenges.map((challenge, index) => (
-                  <Button
-                    key={index}
-                    variant="ghost"
-                    onClick={() => handleChallengeSelect(challenge.title)}
-                    className="flex justify-between items-center bg-white/10 hover:bg-white/20 text-white rounded-lg p-3 transition-all duration-300"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{challenge.icon}</span>
-                      <span>{challenge.title}</span>
-                    </div>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                ))}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="mb-8"
+            >
+              {React.createElement(services[currentIndex].icon, { size: 64, className: "mx-auto text-primary" })}
+            </motion.div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+              {services[currentIndex].title}
+            </h2>
+            <p className="text-xl md:text-2xl mb-6 text-foreground/80">
+              {services[currentIndex].description}
+            </p>
+            <div className="flex justify-center items-center space-x-4 mb-8">
+              <div className="bg-primary/10 backdrop-blur-md rounded-lg px-4 py-2">
+                <p className="text-sm font-semibold text-primary">{services[currentIndex].stats}</p>
               </div>
-              <div className="text-center">
-                <p className="text-sm text-gray-300 mb-3">
-                  ¿No encuentra su desafío específico? Descríbalo aquí:
-                </p>
-                <form 
-                  onSubmit={(e) => { 
-                    e.preventDefault()
-                    handleSubmit(userQuery)
-                    setShowChat(true)
-                  }} 
-                  className="flex gap-2 max-w-md mx-auto"
-                >
-                  <Input
-                    type="text"
-                    placeholder="Describa su desafío empresarial..."
-                    value={userQuery}
-                    onChange={(e) => setUserQuery(e.target.value)}
-                    className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                  />
-                  <Button type="submit" className="bg-gradient-to-r from-[#F33F31] to-[#E77171] hover:from-[#E02D1F] hover:to-[#D55F5F]">
-                    <Send className="h-4 w-4" />
-                    <span className="sr-only">Enviar mensaje</span>
-                  </Button>
-                </form>
+              <div className="bg-secondary/10 backdrop-blur-md rounded-lg px-4 py-2">
+                <p className="text-sm font-semibold text-secondary">{services[currentIndex].highlight}</p>
               </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="h-[350px] overflow-y-auto pr-4 space-y-4">
-                <AnimatePresence>
-                  {conversation.map((message, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className={`p-3 rounded-lg max-w-[80%] ${
-                        message.type === 'user' 
-                          ? 'ml-auto bg-gradient-to-r from-[#F33F31] to-[#E77171] text-white' 
-                          : 'bg-white/30 text-white'
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                {isLoading && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="bg-white/30 text-white p-3 rounded-lg max-w-[80%]"
-                  >
-                    <p>Analizando su consulta...</p>
-                  </motion.div>
-                )}
-                <div ref={chatEndRef} />
-              </div>
-              <form 
-                onSubmit={(e) => { 
-                  e.preventDefault()
-                  handleSubmit(userQuery)
-                }} 
-                className="flex gap-2"
-              >
-                <Input
-                  type="text"
-                  placeholder="Haga una pregunta o describa otro desafío..."
-                  value={userQuery}
-                  onChange={(e) => setUserQuery(e.target.value)}
-                  className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                />
-                <Button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="bg-gradient-to-r from-[#F33F31] to-[#E77171] hover:from-[#E02D1F] hover:to-[#D55F5F]"
-                >
-                  <Send className="h-4 w-4" />
-                  <span className="sr-only">Enviar mensaje</span>
-                </Button>
-              </form>
+            <ul className="mb-8 space-y-2">
+              {services[currentIndex].points.map((point, index) => (
+                <li key={index} className="text-foreground/80">{point}</li>
+              ))}
+            </ul>
+            <div className="flex justify-center space-x-4 mb-8">
+              {services[currentIndex].tags.map((tag, index) => (
+                <span key={index} className="bg-primary/20 text-primary px-3 py-1 rounded-full text-sm">
+                  {tag}
+                </span>
+              ))}
             </div>
-          )}
-        </motion.div>
+            <p className="text-sm text-foreground/60 mb-8">{services[currentIndex].subtext}</p>
+            <Button 
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            onClick={() => setIsModalOpen(true)}
+          >
+            {services[currentIndex].cta}
+          </Button>
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </section>
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-2 z-20">
+        {services.map((_, index) => (
+          <button
+            key={index}
+            className={`w-3 h-3 rounded-full transition-colors ${
+              index === currentIndex ? 'bg-primary' : 'bg-primary/30 hover:bg-primary/50'
+            }`}
+            onClick={() => {
+              setDirection(index > currentIndex ? 1 : -1)
+              setCurrentIndex(index)
+            }}
+          />
+        ))}
+      </div>
+      <button
+        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-background/50 backdrop-blur-sm rounded-full p-2 text-foreground/80 hover:text-primary transition-colors z-20"
+        onClick={prevSlide}
+      >
+        <ChevronLeft size={24} />
+      </button>
+      <button
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-background/50 backdrop-blur-sm rounded-full p-2 text-foreground/80 hover:text-primary transition-colors z-20"
+        onClick={nextSlide}
+      >
+        <ChevronRight size={24} />
+      </button>
+      <Modal isOpen={isModalOpen} onClose={handleModalClose}>
+        <div className="p-6">
+          {!isSuccess ? (
+            <>
+              <h3 className="text-2xl font-bold text-foreground mb-4">
+                Diagnóstico Gratuito de Rendimiento
+              </h3>
+              <p className="text-foreground/80 mb-6">
+                Obtén un análisis detallado del rendimiento de tu sitio web en menos de 5 minutos.
+              </p>
+              <DiagnosticForm 
+                onSubmit={handleDiagnosticSubmit}
+                isLoading={isLoading}
+              />
+            </>
+          ) : (
+            <SuccessMessage onClose={handleModalClose} />
+          )}
+        </div>
+
+        <div className="px-6 py-4 bg-muted/10 rounded-b-lg">
+          <p className="text-xs text-foreground/60 text-center">
+            Tus datos están seguros. No compartimos tu información con terceros.
+          </p>
+        </div>
+      </Modal>
+    </div>
   )
 }
+
+export default HeroCarousel
