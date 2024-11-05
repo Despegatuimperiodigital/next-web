@@ -1,67 +1,147 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect,useCallback ,useRef} from 'react'
 import { X, MessageSquare, Camera, User, Calendar, Link, Send, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import html2canvas from 'html2canvas'
 
+
 const AreaSelector = ({ onSelectArea, onCancel }) => {
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 })
-  const [endPos, setEndPos] = useState({ x: 0, y: 0 })
-  const [isSelecting, setIsSelecting] = useState(false)
+  const containerRef = useRef(null);
+  const [startPos, setStartPos] = useState(null);
+  const [currentPos, setCurrentPos] = useState(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  // Función mejorada para obtener la posición correcta
+  const getScaledPosition = useCallback((clientX, clientY) => {
+    const dpr = window.devicePixelRatio || 1;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    
+    return {
+      x: clientX + scrollX,
+      y: clientY + scrollY,
+      screenX: clientX,
+      screenY: clientY,
+      dpr
+    };
+  }, []);
+
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault();
+    const pos = getScaledPosition(e.clientX, e.clientY);
+    setStartPos(pos);
+    setCurrentPos(pos);
+    setIsSelecting(true);
+  }, [getScaledPosition]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (isSelecting) {
+      const pos = getScaledPosition(e.clientX, e.clientY);
+      setCurrentPos(pos);
+    }
+  }, [isSelecting, getScaledPosition]);
+
+  const handleMouseUp = useCallback(() => {
+    if (isSelecting && startPos && currentPos) {
+      setIsSelecting(false);
+      
+      const dpr = window.devicePixelRatio || 1;
+      const area = {
+        // Coordenadas absolutas para la captura
+        x: Math.min(startPos.x, currentPos.x),
+        y: Math.min(startPos.y, currentPos.y),
+        width: Math.abs(currentPos.x - startPos.x),
+        height: Math.abs(currentPos.y - startPos.y),
+        // Información adicional
+        devicePixelRatio: dpr,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        scrollX: window.scrollX,
+        scrollY: window.scrollY
+      };
+
+      // Validar que el área seleccionada está dentro de los límites
+      if (area.width > 10 && area.height > 10) {
+        onSelectArea(area);
+      }
+    }
+  }, [isSelecting, startPos, currentPos, onSelectArea]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') {
+      onCancel();
+    }
+  }, [onCancel]);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (isSelecting) {
-        setEndPos({ x: e.clientX, y: e.clientY })
-      }
-    }
-
-    const handleMouseUp = () => {
-      if (isSelecting) {
-        setIsSelecting(false)
-        onSelectArea({
-          x: Math.min(startPos.x, endPos.x),
-          y: Math.min(startPos.y, endPos.y),
-          width: Math.abs(endPos.x - startPos.x),
-          height: Math.abs(endPos.y - startPos.y)
-        })
-      }
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isSelecting, startPos, endPos, onSelectArea])
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleMouseMove, handleMouseUp, handleKeyDown]);
+
+  // Calcular el estilo visual de la selección
+  const getSelectionStyle = () => {
+    if (!startPos || !currentPos) return null;
+
+    return {
+      position: 'absolute',
+      left: Math.min(startPos.screenX, currentPos.screenX),
+      top: Math.min(startPos.screenY, currentPos.screenY),
+      width: Math.abs(currentPos.screenX - startPos.screenX),
+      height: Math.abs(currentPos.screenY - startPos.screenY)
+    };
+  };
+
+  const selectionStyle = getSelectionStyle();
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 cursor-crosshair z-50"
-      onMouseDown={(e) => {
-        setStartPos({ x: e.clientX, y: e.clientY })
-        setEndPos({ x: e.clientX, y: e.clientY })
-        setIsSelecting(true)
+      ref={containerRef}
+      className="fixed inset-0 z-50 select-none"
+      style={{
+        cursor: 'crosshair',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)'
       }}
+      onMouseDown={handleMouseDown}
     >
-      <div
-        className="absolute border-2 border-[#F33F31] bg-[#FF8866] bg-opacity-30"
-        style={{
-          left: Math.min(startPos.x, endPos.x),
-          top: Math.min(startPos.y, endPos.y),
-          width: Math.abs(endPos.x - startPos.x),
-          height: Math.abs(endPos.y - startPos.y)
-        }}
-      />
+      <div className="absolute inset-0 pointer-events-none" />
+
+      {selectionStyle && (
+        <div
+          className="absolute border-2 border-primary bg-primary/30 pointer-events-none"
+          style={selectionStyle}
+        >
+          {isSelecting && (
+            <div className="absolute -bottom-6 left-0 bg-background text-foreground px-2 py-1 text-xs rounded shadow">
+              {Math.round(selectionStyle.width)} x {Math.round(selectionStyle.height)}
+              <span className="ml-2 text-foreground/60">
+                DPR: {window.devicePixelRatio.toFixed(2)}x
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <button
-        className="fixed top-4 right-4 bg-[#F33F31] text-[#F7F9F8] p-2 rounded-full transition-colors duration-300 hover:bg-[#E77171]"
+        className="fixed top-4 right-4 bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-full shadow-lg transition-colors duration-200"
         onClick={onCancel}
+        title="Cancelar selección (Esc)"
       >
         <X className="w-6 h-6" />
       </button>
+
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-background text-foreground px-4 py-2 rounded-full shadow-lg">
+        Haz clic y arrastra para seleccionar un área • Scroll permitido
+      </div>
     </div>
-  )
-}
+  );
+};
+
+
 
 export default function EnhancedFeedbackButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -75,6 +155,7 @@ export default function EnhancedFeedbackButton() {
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [step, setStep] = useState(1)
   const [isFormVisible, setIsFormVisible] = useState(true)
+  const [showImagePreview, setShowImagePreview] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -111,21 +192,59 @@ export default function EnhancedFeedbackButton() {
     setIsSelectingArea(true)
   }
 
-  const captureScreenshot = (area) => {
-    html2canvas(document.body).then(canvas => {
-      const screenshotCanvas = document.createElement('canvas')
-      const ctx = screenshotCanvas.getContext('2d')
+  const captureScreenshot = async (area) => {
+    try {
+      // Configurar opciones de html2canvas
+      const options = {
+        scale: window.devicePixelRatio, // Usar el DPR actual
+        logging: false,
+        useCORS: true,
+        windowWidth: document.documentElement.offsetWidth,
+        windowHeight: document.documentElement.offsetHeight,
+        x: area.x,
+        y: area.y,
+        width: area.width,
+        height: area.height
+      };
+
+      // Capturar el área específica
+      const canvas = await html2canvas(document.body, options);
+      
+      // Crear un canvas del tamaño exacto del área seleccionada
+      const croppedCanvas = document.createElement('canvas');
+      const ctx = croppedCanvas.getContext('2d');
+      
       if (ctx) {
-        screenshotCanvas.width = area.width
-        screenshotCanvas.height = area.height
-        ctx.drawImage(canvas, area.x, area.y, area.width, area.height, 0, 0, area.width, area.height)
-        const screenshotDataUrl = screenshotCanvas.toDataURL('image/png')
-        setScreenshot(screenshotDataUrl)
+        // Establecer las dimensiones del canvas de recorte
+        croppedCanvas.width = area.width;
+        croppedCanvas.height = area.height;
+        
+        // Dibujar solo el área seleccionada
+        ctx.drawImage(
+          canvas,
+          area.x * window.devicePixelRatio,
+          area.y * window.devicePixelRatio,
+          area.width * window.devicePixelRatio,
+          area.height * window.devicePixelRatio,
+          0,
+          0,
+          area.width,
+          area.height
+        );
+        
+        // Convertir a data URL
+        const screenshotDataUrl = croppedCanvas.toDataURL('image/png');
+        setScreenshot(screenshotDataUrl);
       }
-      setIsSelectingArea(false)
-      setIsFormVisible(true)
-    })
-  }
+      
+      setIsSelectingArea(false);
+      setIsFormVisible(true);
+    } catch (error) {
+      console.error('Error al capturar la pantalla:', error);
+      setIsSelectingArea(false);
+      setIsFormVisible(true);
+    }
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -186,8 +305,17 @@ export default function EnhancedFeedbackButton() {
               Capturar área de pantalla
             </button>
             {screenshot && (
-              <div className="mt-2 border border-gray-600 rounded-md p-2">
-                <img src={screenshot} alt="Captura de pantalla" className="w-full h-auto rounded" />
+              <div className="mt-2 space-y-2">
+                <div className="border border-[#182633] rounded-md p-2 h-32 overflow-hidden">
+                  <img src={screenshot} alt="Captura de pantalla" className="w-full h-full object-cover" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowImagePreview(true)}
+                  className="w-full flex items-center justify-center px-4 py-2 border border-[#182633] rounded-md shadow-sm text-sm font-medium text-[#182633] bg-[#F7F9F8] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF8866] transition-colors duration-300"
+                >
+                  Previsualizar imagen
+                </button>
               </div>
             )}
           </div>
@@ -306,7 +434,20 @@ export default function EnhancedFeedbackButton() {
           </div>
         </div>
       )}
-    
+      {showImagePreview && screenshot && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[#F7F9F8] rounded-lg shadow-xl w-full max-w-4xl p-4 relative animate-fadeIn">
+            <button
+              onClick={() => setShowImagePreview(false)}
+              className="absolute top-2 right-2 text-[#182633] hover:text-[#FF8866] transition-colors duration-300"
+              aria-label="Cerrar previsualización"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img src={screenshot} alt="Previsualización de captura de pantalla" className="w-full h-auto rounded-lg" />
+          </div>
+        </div>
+      )}
     </>
   )
 }
