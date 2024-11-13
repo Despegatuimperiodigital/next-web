@@ -1,4 +1,4 @@
-/ app/sitemap.js
+// app/sitemap.js
 import { cache } from 'react'
 
 // Función para obtener posts con caché
