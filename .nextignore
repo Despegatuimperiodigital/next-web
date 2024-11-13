@@ -1,0 +1,28 @@
+# APIs específicas a ignorar
+app/api/leads/**/*
+app/api/task/**/*
+app/api/notifications/**/*
+
+# Archivos específicos dentro de esas APIs
+app/api/leads/**/*.{js,ts,jsx,tsx}
+app/api/task/**/*.{js,ts,jsx,tsx}
+app/api/notifications/**/*.{js,ts,jsx,tsx}
+
+# Ignorar archivos de configuración y utilidades
+app/api/**/*.config.{js,ts}
+app/api/**/*.utils.{js,ts}
+app/api/**/*.test.{js,ts}
+app/api/**/*.spec.{js,ts}
+app/api/**/*.temp.*
+
+# Ignorar archivos de desarrollo
+**/.DS_Store
+**/*.log
+**/.env.*
+!.env.example
+
+# Ignorar directorios específicos
+.turbo
+.vercel
+.coverage
+node_modules

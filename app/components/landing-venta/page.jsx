@@ -6,11 +6,9 @@ import PainSection from './components/PainSection';
 import SolutionSection from './components/SolutionSection';
 import SocialProofSection from './components/SocialProofSection';
 import PlansSection from './components/PlansSection';
-import GuaranteesSection from './components/GuaranteesSection';
-import FinalCTA from './components/FinalCTA';
-import Footer from './components/Footer';
 
-const LandingPage = () => {
+
+const LandingPageVenta = () => {
   return (
     <div className="landing-page">
       <Header />
@@ -20,12 +18,11 @@ const LandingPage = () => {
         <SolutionSection />
         <SocialProofSection />
         <PlansSection />
-        <GuaranteesSection />
-        <FinalCTA />
+      
       </main>
-      <Footer />
+      
     </div>
   );
 };
 
-export default LandingPage;
+export default LandingPageVenta;

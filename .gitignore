@@ -1,39 +1,66 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
 
-# testing
+# Testing
 /coverage
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Production
 /build
 
-# misc
+# Misc
 .DS_Store
 *.pem
 
-# debug
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Local env files
+.env*.local
+.env
 
-
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# APIs específicas que quieres ignorar
+/app/api/leads/**
+/app/api/notifications/**
+
+# Mantener ciertas rutas específicas (usando !)
+!/app/api/tasks/**
+!/lib/db/models/**
+
+# Archivos específicos dentro de las APIs a ignorar
+/app/api/leads/**/*.js
+/app/api/leads/**/*.ts
+/app/api/notifications/**/*.js
+/app/api/notifications/**/*.ts
+
+# Ignorar archivos temporales
+*.temp.*
+*.tmp
+*.bak
+
+# Ignorar logs
+*.log
+
+# IDEs y editores
+.idea
+.vscode
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

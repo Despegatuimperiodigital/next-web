@@ -6,18 +6,15 @@ import Image from "next/image"
 import Link from "next/link"
 import Navbar from '../../components/navbar'
 import { Button } from "../../components/ui/button"
+import LandingPageVenta from '../../components/landing-venta/page'
+
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#F7F9F8] to-[#E0E5E9] text-[#182633]">
       <Navbar />
 
       <main className="flex-grow">  {/* Removido el pt-32 */}
-        <HeroSection />
-        <BenefitsSection />
-        <WhyGTMSection />
-        <BeyondAdsSection />
-        <OurServiceSection />
-        <CTASection />
+      <LandingPageVenta/>
       </main>
 
       <footer className="bg-[#182633] text-white py-8">
