@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, ArrowUpRight } from 'lucide-react';
 
 const loadingTips = [
   "¿Sabías que el 53% de los usuarios abandonan un sitio si tarda más de 3 segundos en cargar?",
@@ -48,11 +48,19 @@ export default function PerformanceAnalyzer() {
 
   const analyzePositives = (results) => {
     const positives = [];
+    const negatives = [];
+
     
     if (results.summary.performanceScore >= 90) {
       positives.push({
         title: "Excelente Performance Score",
         description: "Tu sitio tiene un rendimiento excepcional",
+        metric: `${results.summary.performanceScore}%`
+      });
+    } else {
+      negatives.push({
+        title: "Mejorar Performance Score",
+        description: "El rendimiento de tu sitio puede mejorarse",
         metric: `${results.summary.performanceScore}%`
       });
     }
@@ -63,12 +71,24 @@ export default function PerformanceAnalyzer() {
         description: "El contenido se muestra rápidamente a los usuarios",
         metric: `${results.metrics.core.fcp.toFixed(1)}ms`
       });
+    } else {
+      negatives.push({
+        title: "Mejorar First Contentful Paint",
+        description: "El tiempo de carga del contenido inicial puede ser más rápido",
+        metric: `${results.metrics.core.fcp.toFixed(1)}ms`
+      });
     }
     
     if (results.metrics.core.lcp < 2500) {
       positives.push({
         title: "Largest Contentful Paint Eficiente",
         description: "El contenido principal carga de manera veloz",
+        metric: `${results.metrics.core.lcp.toFixed(1)}ms`
+      });
+    } else {
+      negatives.push({
+        title: "Mejorar Largest Contentful Paint",
+        description: "El tiempo de carga del contenido principal puede ser más rápido",
         metric: `${results.metrics.core.lcp.toFixed(1)}ms`
       });
     }
@@ -79,9 +99,15 @@ export default function PerformanceAnalyzer() {
         description: "Tu sitio mantiene una experiencia visual estable",
         metric: results.metrics.core.cls.toFixed(3)
       });
+    } else {
+      negatives.push({
+        title: "Mejorar Estabilidad Visual",
+        description: "La estabilidad visual del sitio puede mejorarse",
+        metric: results.metrics.core.cls.toFixed(3)
+      });
     }
 
-    return positives;
+    return { positives, negatives };
   };
 
   const handleAnalyze = async () => {
@@ -103,7 +129,8 @@ export default function PerformanceAnalyzer() {
       }
 
       const data = await response.json();
-      setResults(data);
+
+    setResults(data);
     } catch (err) {
       console.error('Error:', err);
       setError('Error en el análisis');
@@ -112,7 +139,26 @@ export default function PerformanceAnalyzer() {
     }
   };
 
+  const handleOpenGooglePageSpeed = () => {
+    const googlePageSpeedUrl = `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(url)}`;
+    window.open(googlePageSpeedUrl, '_blank');
+  };
+
   return (
+    { /* Esto sugirio la IA que debía agregar pero lo deje comentado 
+      <div className="flex flex-col items-center justify-center h-screen">
+  <h1 className="text-4xl font-bold mb-4">Analizador de Rendimiento</h1>
+  <div className="bg-white shadow-md rounded-md p-6 w-full max-w-4xl">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-2xl font-bold">Resultados del análisis</h2>
+      <button
+        onClick={handleOpenGooglePageSpeed}
+        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md flex items-center"
+      >
+        <ArrowUpRight className="mr-2" />
+        Abrir en Google Page Speed
+      </button>
+    </div> */}
     <div className="w-full max-w-4xl mx-auto p-4">
       <div className="bg-white shadow-md rounded-lg p-6">
         <div className="flex gap-4 mb-6">
@@ -185,7 +231,48 @@ export default function PerformanceAnalyzer() {
                 </div>
               </div>
             )}
-
+          
+             {/* Oportunidades de Mejora 
+             {analyzePositives(results).negatives.length > 0 && (
+              <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="font-bold text-xl mb-4 text-gray-800 flex items-center gap-2">
+                  <AlertTriangle className="text-yellow-500" size={24} />
+                  Oportunidades de Mejora
+                </h3>
+                <div className="space-y-4">
+                  {analyzePositives(results).negatives
+                    .sort((a, b) => b.status === 'poor' ? -1 : 1) // Mostrar primero las de mayor prioridad
+                    .map((negative, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-lg ${
+                          negative.status === 'poor'
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-yellow-50 border-yellow-200'
+                        } border`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${
+                              negative.status === 'poor'
+                                ? 'bg-red-200 text-red-800'
+                                : 'bg-yellow-200 text-yellow-800'
+                            }`}>
+                              {negative.status.toUpperCase()}
+                            </span>
+                            <h4 className="font-semibold text-lg">{negative.title}</h4>
+                          </div>
+                        </div>
+                        <p className="text-gray-600 mb-2">{negative.description}</p>
+                        <div className="mt-2 space-y-1">
+                          <p className="text-gray-700"><span className="font-medium">Métrica:</span> {negative.metric}</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}*/}
+            
             {/* Core Web Vitals */}
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="font-bold text-xl mb-4 text-gray-800">Core Web Vitals</h3>
