@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useCallback } from 'react';
 import { Calculator, AlertTriangle, TrendingUp, AlertCircle } from 'lucide-react';
 
