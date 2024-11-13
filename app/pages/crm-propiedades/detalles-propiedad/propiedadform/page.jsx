@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Home, Building2, Store, MapPin, Briefcase, Plus, X, Upload, File, Image as ImageIcon, ChevronRight, Check } from 'lucide-react'
+import { Home, Building2, Store, MapPin, Briefcase, Plus, X, Upload, File, Image as ImageIcon, ChevronRight, ChevronLeft, Check } from 'lucide-react'
 
 const propertyTypes = [
   { icon: Home, label: 'Casa' },
