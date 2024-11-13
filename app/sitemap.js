@@ -21,7 +21,7 @@ const getPages = cache(async () => {
   return pages
 })
 
-export default async function sitemap() {
+export  async function sitemap() {
   const [posts, pages] = await Promise.all([
     getPosts(),
     getPages()

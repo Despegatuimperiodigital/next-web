@@ -3,7 +3,7 @@
 import React from 'react'  // En lugar de import { React } from 'react'
 import { useState } from 'react'
 import Image from 'next/image'
-import { Pencil, Trash2, CheckCircle, Home, Bed, Bath, Calendar, MapPin, Share2, FileText, Eye, Download, X } from 'lucide-react'
+import { Pencil, Trash2, CheckCircle, ChevronRight,ChevronLeft, Home, Bed, Bath, Calendar, MapPin, Share2, FileText, Eye, Download, X } from 'lucide-react'
 
 const mockProperty = {
   id: 'PROP123',

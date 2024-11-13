@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import { sitemap } from '../../sitemap'
 
-export async function GET() {
+export async function GET() {  // Removido el "default"
   try {
     const sitemapData = await sitemap()
     return NextResponse.json({
