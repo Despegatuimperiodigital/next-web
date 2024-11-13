@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['puppeteer'], // Importante para que puppeteer funcione
+    serverExternalPackages: ['puppeteer'], // Importante para que puppeteer funcione
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

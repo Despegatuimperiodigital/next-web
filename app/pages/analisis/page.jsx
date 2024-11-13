@@ -1,13 +1,10 @@
-'use client'
-
-
 import React, { useState, useCallback } from 'react';
 import { Calculator, AlertTriangle, TrendingUp, AlertCircle } from 'lucide-react';
 
 const IMPACT_FACTORS = {
-  VISIBILITY_LOSS_PER_SECOND: 0.0832, // 8.32% loss per second after 2.5s
-  CONVERSION_IMPACT: 0.07, // 7% conversion loss per second
-  AD_QUALITY_IMPACT: 0.12, // 12% quality score reduction
+  VISIBILITY_LOSS_PER_SECOND: 0.0832,
+  CONVERSION_IMPACT: 0.07,
+  AD_QUALITY_IMPACT: 0.12,
 };
 
 const CoreWebVitalsCalculator = () => {
@@ -37,9 +34,7 @@ const CoreWebVitalsCalculator = () => {
       setLoading(true);
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: inputs.url }),
       });
 
@@ -48,14 +43,12 @@ const CoreWebVitalsCalculator = () => {
       const data = await response.json();
       setAnalysisResults(data);
       
-      // Actualizar tiempo de carga si no fue ingresado manualmente
       if (!inputs.loadTime && data.metrics?.core?.lcp) {
         setInputs(prev => ({
           ...prev,
           loadTime: (data.metrics.core.lcp / 1000).toFixed(1)
         }));
       }
-
     } catch (error) {
       console.error('Error:', error);
       setErrors(prev => ({ ...prev, analysis: 'Error al analizar la URL' }));
@@ -71,7 +64,6 @@ const CoreWebVitalsCalculator = () => {
       return;
     }
 
-    // Primero analizar la URL si no tenemos resultados
     if (!analysisResults) {
       await analyzeUrl();
     }
@@ -82,15 +74,11 @@ const CoreWebVitalsCalculator = () => {
     const revenue = parseFloat(inputs.monthlyRevenue) || 0;
 
     const excessTime = Math.max(0, loadTime - 2.5);
-    
     const visibilityLoss = excessTime * IMPACT_FACTORS.VISIBILITY_LOSS_PER_SECOND;
     const trafficLoss = Math.floor(traffic * visibilityLoss);
-    
     const conversionLoss = excessTime * IMPACT_FACTORS.CONVERSION_IMPACT;
     const potentialRevenueLoss = revenue * conversionLoss;
-    
     const adEfficiencyLoss = adSpend * (excessTime * IMPACT_FACTORS.AD_QUALITY_IMPACT);
-    
     const currentScore = Math.max(0, Math.min(100, 100 - (excessTime * 20)));
 
     setResults({
@@ -124,76 +112,71 @@ const CoreWebVitalsCalculator = () => {
   const formatNumber = (value) => {
     return new Intl.NumberFormat('es-CL').format(value);
   };
-// ... (código anterior sin cambios hasta la función de formatNumber)
 
-const generateDetailedReport = (results, analysisResults) => {
-  // Crear objeto con todos los datos del reporte
-  const reportData = {
-    timestamp: new Date().toLocaleString('es-CL'),
-    url: analysisResults?.url || 'No disponible',
-    generalMetrics: {
-      performanceScore: results.scores.current,
-      potentialImprovement: results.scores.improvement,
-      loadTime: inputs.loadTime,
-    },
-    coreWebVitals: {
-      lcp: analysisResults?.metrics?.core?.lcp,
-      cls: analysisResults?.metrics?.core?.cls,
-      tti: analysisResults?.metrics?.core?.tti,
-    },
-    impactoFinanciero: {
-      mensual: {
-        trafico: results.monthlyLosses.traffic,
-        ingresos: results.monthlyLosses.revenue,
-        ads: results.monthlyLosses.adWaste,
-        total: results.monthlyLosses.total
+  const generateDetailedReport = (results, analysisResults) => {
+    const reportData = {
+      timestamp: new Date().toLocaleString('es-CL'),
+      url: analysisResults?.url || 'No disponible',
+      generalMetrics: {
+        performanceScore: results.scores.current,
+        potentialImprovement: results.scores.improvement,
+        loadTime: inputs.loadTime,
       },
-      anual: {
-        trafico: results.annualProjection.traffic,
-        ingresos: results.annualProjection.revenue,
-        ads: results.annualProjection.adWaste,
-        total: results.annualProjection.total
-      }
-    },
-    recomendaciones: analysisResults?.recommendations || [],
-    recursosAnalisis: analysisResults?.metrics?.resources,
-    servidorMetricas: analysisResults?.metrics?.server
-  };
+      coreWebVitals: {
+        lcp: analysisResults?.metrics?.core?.lcp,
+        cls: analysisResults?.metrics?.core?.cls,
+        tti: analysisResults?.metrics?.core?.tti,
+      },
+      impactoFinanciero: {
+        mensual: {
+          trafico: results.monthlyLosses.traffic,
+          ingresos: results.monthlyLosses.revenue,
+          ads: results.monthlyLosses.adWaste,
+          total: results.monthlyLosses.total
+        },
+        anual: {
+          trafico: results.annualProjection.traffic,
+          ingresos: results.annualProjection.revenue,
+          ads: results.annualProjection.adWaste,
+          total: results.annualProjection.total
+        }
+      },
+      recomendaciones: analysisResults?.recommendations || [],
+      recursosAnalisis: analysisResults?.metrics?.resources,
+      servidorMetricas: analysisResults?.metrics?.server
+    };
 
-  // Convertir a formato CSV para descarga
-  const generateCSV = (data) => {
     const rows = [
       ['REPORTE DE IMPACTO CORE WEB VITALS', ''],
-      ['Generado:', data.timestamp],
-      ['URL Analizada:', data.url],
+      ['Generado:', reportData.timestamp],
+      ['URL Analizada:', reportData.url],
       [''],
       ['MÉTRICAS GENERALES', ''],
-      ['Performance Score:', `${data.generalMetrics.performanceScore}%`],
-      ['Mejora Potencial:', `${data.generalMetrics.potentialImprovement}%`],
-      ['Tiempo de Carga:', `${data.generalMetrics.loadTime}s`],
+      ['Performance Score:', `${reportData.generalMetrics.performanceScore}%`],
+      ['Mejora Potencial:', `${reportData.generalMetrics.potentialImprovement}%`],
+      ['Tiempo de Carga:', `${reportData.generalMetrics.loadTime}s`],
       [''],
       ['CORE WEB VITALS', ''],
-      ['LCP (Largest Contentful Paint):', `${(data.coreWebVitals.lcp/1000).toFixed(2)}s`],
-      ['CLS (Cumulative Layout Shift):', data.coreWebVitals.cls],
-      ['TTI (Time to Interactive):', `${(data.coreWebVitals.tti/1000).toFixed(2)}s`],
+      ['LCP:', `${(reportData.coreWebVitals.lcp/1000).toFixed(2)}s`],
+      ['CLS:', reportData.coreWebVitals.cls],
+      ['TTI:', `${(reportData.coreWebVitals.tti/1000).toFixed(2)}s`],
       [''],
       ['IMPACTO FINANCIERO MENSUAL', ''],
-      ['Pérdida de Tráfico:', data.impactoFinanciero.mensual.trafico],
-      ['Pérdida de Ingresos:', formatCurrency(data.impactoFinanciero.mensual.ingresos)],
-      ['Desperdicio en Ads:', formatCurrency(data.impactoFinanciero.mensual.ads)],
-      ['Total Mensual:', formatCurrency(data.impactoFinanciero.mensual.total)],
+      ['Pérdida de Tráfico:', reportData.impactoFinanciero.mensual.trafico],
+      ['Pérdida de Ingresos:', formatCurrency(reportData.impactoFinanciero.mensual.ingresos)],
+      ['Desperdicio en Ads:', formatCurrency(reportData.impactoFinanciero.mensual.ads)],
+      ['Total Mensual:', formatCurrency(reportData.impactoFinanciero.mensual.total)],
       [''],
       ['IMPACTO FINANCIERO ANUAL', ''],
-      ['Pérdida de Tráfico:', data.impactoFinanciero.anual.trafico],
-      ['Pérdida de Ingresos:', formatCurrency(data.impactoFinanciero.anual.ingresos)],
-      ['Desperdicio en Ads:', formatCurrency(data.impactoFinanciero.anual.ads)],
-      ['Total Anual:', formatCurrency(data.impactoFinanciero.anual.total)],
+      ['Pérdida de Tráfico:', reportData.impactoFinanciero.anual.trafico],
+      ['Pérdida de Ingresos:', formatCurrency(reportData.impactoFinanciero.anual.ingresos)],
+      ['Desperdicio en Ads:', formatCurrency(reportData.impactoFinanciero.anual.ads)],
+      ['Total Anual:', formatCurrency(reportData.impactoFinanciero.anual.total)],
       [''],
       ['RECOMENDACIONES PRIORITARIAS', '']
     ];
 
-    // Agregar recomendaciones
-    data.recomendaciones.forEach((rec, index) => {
+    reportData.recomendaciones.forEach((rec, index) => {
       rows.push([`${index + 1}. ${rec.issue}`, '']);
       rows.push(['Prioridad:', rec.priority]);
       rows.push(['Descripción:', rec.description]);
@@ -202,28 +185,19 @@ const generateDetailedReport = (results, analysisResults) => {
       rows.push(['', '']);
     });
 
-    // Convertir a CSV
-    return rows.map(row => row.join(',')).join('\n');
+    const csv = rows.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `reporte-web-vitals-${new Date().toISOString().slice(0,10)}.csv`;
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-
-  // Crear y descargar el archivo
-  const csv = generateCSV(reportData);
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  link.setAttribute('href', url);
-  link.setAttribute('download', `reporte-web-vitals-${new Date().toISOString().slice(0,10)}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 space-y-6 font-['Nunito']">
-      {/* Header Section */}
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="flex items-center gap-2 mb-2">
           <Calculator className="h-6 w-6 text-primary" />
@@ -236,10 +210,8 @@ const generateDetailedReport = (results, analysisResults) => {
         </p>
       </div>
 
-      {/* Input Form */}
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* URL Input */}
           <div>
             <label className="block text-sm font-medium text-card-foreground">URL del sitio *</label>
             <input
@@ -252,7 +224,6 @@ const generateDetailedReport = (results, analysisResults) => {
             {errors.url && <p className="mt-1 text-sm text-destructive">{errors.url}</p>}
           </div>
           
-          {/* Load Time Input */}
           <div>
             <label className="block text-sm font-medium text-card-foreground flex items-center gap-1">
               Tiempo de carga actual (segundos) *
@@ -269,7 +240,6 @@ const generateDetailedReport = (results, analysisResults) => {
             {errors.loadTime && <p className="mt-1 text-sm text-destructive">{errors.loadTime}</p>}
           </div>
 
-          {/* Monthly Traffic Input */}
           <div>
             <label className="block text-sm font-medium text-card-foreground">Tráfico mensual *</label>
             <input
@@ -282,7 +252,6 @@ const generateDetailedReport = (results, analysisResults) => {
             {errors.monthlyTraffic && <p className="mt-1 text-sm text-destructive">{errors.monthlyTraffic}</p>}
           </div>
 
-          {/* Ad Spend Input */}
           <div>
             <label className="block text-sm font-medium text-card-foreground">Inversión mensual en ads</label>
             <input
@@ -294,7 +263,6 @@ const generateDetailedReport = (results, analysisResults) => {
             />
           </div>
 
-          {/* Monthly Revenue Input */}
           <div>
             <label className="block text-sm font-medium text-card-foreground">Ventas mensuales</label>
             <input
@@ -316,10 +284,8 @@ const generateDetailedReport = (results, analysisResults) => {
         </button>
       </div>
 
-      {/* Results Section */}
       {results && (
         <div className="space-y-6">
-          {/* Monthly Losses Alert */}
           <div className="bg-destructive/10 border-l-4 border-destructive p-4 rounded-md">
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -336,12 +302,16 @@ const generateDetailedReport = (results, analysisResults) => {
               </div>
               <div>
                 <p className="text-sm font-medium text-destructive">Desperdicio en Ads</p>
-                <p className="text-2xl font-bold text-destructive">{formatCurrency(results.monthlyLosses.adWaste)}</p>
+                
+
+
+
+
+<p className="text-2xl font-bold text-destructive">{formatCurrency(results.monthlyLosses.adWaste)}</p>
               </div>
             </div>
           </div>
 
-          {/* Annual Projection */}
           <div className="bg-card rounded-lg shadow-md p-6">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -374,7 +344,6 @@ const generateDetailedReport = (results, analysisResults) => {
               <div className="space-y-4">
                 <h4 className="font-semibold text-lg text-card-foreground">Score de Rendimiento</h4>
                 <div className="space-y-4">
-                  {/* Current Score */}
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-medium text-card-foreground">Actual</span>
@@ -388,7 +357,6 @@ const generateDetailedReport = (results, analysisResults) => {
                     </div>
                   </div>
 
-                  {/* Potential Score */}
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-medium text-card-foreground">Potencial</span>
@@ -402,7 +370,6 @@ const generateDetailedReport = (results, analysisResults) => {
                     </div>
                   </div>
 
-                  {/* Improvement Score */}
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-medium text-card-foreground">Mejora Posible</span>
@@ -420,16 +387,13 @@ const generateDetailedReport = (results, analysisResults) => {
             </div>
           </div>
 
-          {/* Performance Analysis */}
           {analysisResults && (
             <div className="bg-card rounded-lg shadow-md p-6">
               <h3 className="font-semibold text-lg mb-4 text-card-foreground">Análisis de Performance</h3>
               
-              {/* Core Web Vitals */}
               <div className="mb-6">
                 <h4 className="font-medium text-card-foreground mb-3">Core Web Vitals</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* LCP */}
                   <div className="p-4 bg-background rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium text-card-foreground">LCP</span>
@@ -443,7 +407,6 @@ const generateDetailedReport = (results, analysisResults) => {
                     <p className="text-sm text-muted-foreground">Largest Contentful Paint</p>
                   </div>
 
-                  {/* CLS */}
                   <div className="p-4 bg-background rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium text-card-foreground">CLS</span>
@@ -457,7 +420,6 @@ const generateDetailedReport = (results, analysisResults) => {
                     <p className="text-sm text-muted-foreground">Cumulative Layout Shift</p>
                   </div>
 
-                  {/* TTI */}
                   <div className="p-4 bg-background rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium text-card-foreground">TTI</span>
@@ -473,7 +435,6 @@ const generateDetailedReport = (results, analysisResults) => {
                 </div>
               </div>
 
-              {/* Recommendations */}
               {analysisResults.recommendations?.length > 0 && (
                 <div>
                   <h4 className="font-medium text-card-foreground mb-3">Recomendaciones</h4>
@@ -511,7 +472,6 @@ const generateDetailedReport = (results, analysisResults) => {
             </div>
           )}
 
-          {/* CTA Section */}
           <div className="text-center space-y-4">
             <button 
               onClick={() => generateDetailedReport(results, analysisResults)}
