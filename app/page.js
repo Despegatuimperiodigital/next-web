@@ -24,6 +24,9 @@ import Footer from './components/home/Footer';
 import EnhancedFeedbackButton from './components/suportchat/Supportchat.jsx';
 import Analytics from '../analiticas/analytics';
 
+
+
+
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
