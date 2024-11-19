@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { connect } from '../../../../lib/db/connect';
 import Ticket from '../../../../lib/db/models/Ticket';
 import Comment from '../../../../lib/db/models/Comment';
-//import { sendNotification } from '../../../utils/notifications';
+import { sendNotification } from '../../../utils/notifications';
 
 export async function GET(req, { params }) {
   const { id } = await params;
@@ -60,7 +60,12 @@ export async function PUT(req, { params }) {
     // Verificar estado "closed"
     if (ticket.status === 'closed' && existingTicket.status !== 'closed') {
       await existingTicket.closeTicket();
-      //await sendNotification(existingTicket, existingTicket.assignedTo, req.user, 'closure');
+      await sendNotification(
+        existingTicket,
+        existingTicket.assignedTo,
+        req.user,
+        'closure'
+      );
       return new Response(
         JSON.stringify({ message: 'Ticket cerrado exitosamente' }),
         { status: 200 }
@@ -81,7 +86,7 @@ export async function PUT(req, { params }) {
 
     // Notificar si es que hubo reasignación de usuarios.
     if (ticket.assignedTo && ticket.assignedTo !== previousAssignedTo) {
-      /*await sendNotification(
+      await sendNotification(
         updatedTicket,
         previousAssignedTo,
         req.user,
@@ -92,17 +97,17 @@ export async function PUT(req, { params }) {
         updatedTicket.assignedTo,
         req.user,
         'reassignment-new'
-      );*/
+      );
     }
 
     console.log('Author object:', req.user);
     //Notificación para actualizar
-    /*await sendNotification(
+    await sendNotification(
       updatedTicket,
       updatedTicket.assignedTo,
       req.user,
       'update'
-    );*/
+    );
     return new Response(JSON.stringify(updatedTicket), { status: 200 });
   } catch (error) {
     return new Response(
@@ -130,6 +135,16 @@ export async function DELETE(req, { params }) {
       return new Response(JSON.stringify({ message: 'Ticket no encontrado' }), {
         status: 404,
       });
+    }
+
+    // Notificar que el ticket ha sido eliminado
+    if (deletedTicket.assignedTo) {
+      await sendNotification(
+        deletedTicket,
+        deletedTicket.assignedTo,
+        req.user,
+        'deletion'
+      );
     }
 
     // El ticket fue eliminado exitosamente

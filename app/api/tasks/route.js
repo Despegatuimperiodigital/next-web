@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 import { NextResponse } from 'next/server';
-import Task from '../../../lib/db/models/Task';
 import Ticket from '../../../lib/db/models/Ticket';
 import User from '../../../lib/db/models/User';
-import {} from '../../../lib/services/notificationService';
+import { sendNotification } from '../../../lib/services/notificationService';
 import { connect } from '../../../lib/db/connect';
+import { getToken } from 'next-auth/jwt';
 
 console.log('Ruta /api/task cargada correctamente');
 
@@ -39,22 +39,15 @@ export async function POST(request) {
     await connect();
     console.log('Conexión a la base de datos establecida correctamente');
 
-    /*Verificar autenticación
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    // Obtener el token del request
+    const token = await getToken({ req: request });
+
+    if (!token) {
       return NextResponse.json(
-        { message: 'No autorizado' },
+        { message: 'Usuario no autenticado' },
         { status: 401 }
       );
     }
-
-    // Verificar rol de admin
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Solo los administradores pueden crear tickets' },
-        { status: 403 }
-      );
-    } */
 
     // Obtener datos del ticket
     const data = await request.json();
@@ -83,7 +76,7 @@ export async function POST(request) {
       const user = await User.findById(assignedTo);
       if (!user) {
         return NextResponse.json(
-          { message: 'Usuario no encontrado' },
+          { message: 'Usuario asignado no existe' },
           { status: 404 }
         );
       }
@@ -101,17 +94,26 @@ export async function POST(request) {
         link,
         image_url,
       },
+      createdBy: token.sub,
     });
 
     const savedTicket = await newTicket.save();
 
     // Enviar notificación si hay usuario asignado
     if (assignedTo) {
-      await sendNotification(savedTicket, assignedTo, session.user, 'creation');
+      await sendNotification(
+        savedTicket,
+        assignedTo,
+        {
+          id: token.sub,
+          name: token.name, // Si el token incluye el nombre
+          email: token.email, // Si el token incluye el email
+        },
+        'creation'
+      );
     }
 
-    console.log('Ticket creado:', savedTicket);
-
+    console.log('Ticket creado por usuario:', token.sub);
     return NextResponse.json(savedTicket, { status: 201 });
   } catch (error) {
     console.error('Error al crear ticket:', error);
