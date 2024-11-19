@@ -23,6 +23,7 @@ import Contacto from './components/home/Contact';
 import Footer from './components/home/Footer';
 import EnhancedFeedbackButton from './components/suportchat/Supportchat.jsx';
 import Analytics from '../analiticas/analytics';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 
 
@@ -75,6 +76,7 @@ export default function LandingPage() {
         )}
       </main>
       <Analytics />
+      <SpeedInsights/>
     </div>
   );
 }

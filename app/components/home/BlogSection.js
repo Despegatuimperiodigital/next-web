@@ -6,6 +6,19 @@ import { Calendar, User, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
+
+export const metadata = {
+  title: 'Blog - CloudHub',
+  description: 'Explora nuestros últimos artículos sobre tecnología, innovación y estrategias empresariales.',
+  openGraph: {
+    title: 'Blog - CloudHub',
+    description: 'Explora nuestros últimos artículos sobre tecnología, innovación y estrategias empresariales.',
+    type: 'website',
+    url: 'https://cloudhub.cl/pages/blog',
+  },
+};
+
+
 export default function BlogSection() {
   const [blogPosts, setBlogPosts] = useState([]);
   const [loading, setLoading] = useState(true);
