@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'; 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { signIn, getCsrfToken } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'  // Cambiado de 'next/router' a 'next/navigation'
 
@@ -10,7 +10,17 @@ export default function IniciarSesion() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [csrfToken, setCsrfToken] = useState('')
+
   const router = useRouter()
+
+  useEffect(() => {
+    const getCsrf = async () => {
+      const token = await getCsrfToken()
+      setCsrfToken(token)
+    }
+    getCsrf()
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,18 +37,21 @@ export default function IniciarSesion() {
     }*/
 
       // Llamar a NextAuth para manejar el inicio de sesión
-    const result = await signIn('credentials', {
+  const result = await signIn('credentials', {
       email,
       password,
-      redirect: false, // No redirige automáticamente, permite manejarlo
-    });
+      csrfToken,
+      redirect: false,
+    })
+    console.log(result, csrfToken)
 
-    if (result?.error) {
-      // Mostrar error si ocurre un problema
-      setError('Error al iniciar sesión. Verifica tus credenciales.');
+   if (result?.error) {
+  setError(result.error);
+  console.log('Error detallado:', result);
     } else {
       // Redirigir al dashboard después de un inicio exitoso
-      router.push('/dashboard');
+      console.log(result)
+      //router.push('/dashboard');
     }
     
   }

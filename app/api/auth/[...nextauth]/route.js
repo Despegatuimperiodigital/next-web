@@ -4,32 +4,35 @@ import { compare } from 'bcrypt';
 import { connect } from '../../../../lib/db/connect';
 import User from '../../../../lib/db/models/User';
 
+
+
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        csrfToken: { label: "CSRF Token", type: "text" }
       },
       async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Se requieren credenciales');
+        }
+
         try {
           await connect();
-
           const user = await User.findOne({ email: credentials.email });
+          
           if (!user) {
             throw new Error('Email no registrado');
           }
 
-          const isPasswordValid = await compare(
-            credentials.password,
-            user.password
-          );
+          const isPasswordValid = await compare(credentials.password, user.password);
           if (!isPasswordValid) {
             throw new Error('Contraseña incorrecta');
           }
 
-          // Retornar datos importantes del usuario
           return {
             id: user._id.toString(),
             email: user.email,
@@ -42,14 +45,14 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id;
         token.name = user.name;
       }
       return token;
     },
-    async session({ session, token }) {
+    session: async ({ session, token }) => {
       if (token) {
         session.user.id = token.id;
         session.user.name = token.name;
@@ -58,7 +61,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: '/login', // cambiar si la ruta es diferente para el login
+    signIn: '/login',
   },
   session: {
     strategy: 'jwt',
