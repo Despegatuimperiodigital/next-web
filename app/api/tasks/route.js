@@ -71,9 +71,11 @@ export async function POST(request) {
       image_url,
     } = ticket;
 
+    let user = null;
     // Verificar usuario asignado
     if (assignedTo) {
-      const user = await User.findById(assignedTo);
+      console.log('Usuario asignado encontrado:', assignedTo);
+      user = await User.findById(assignedTo);
       if (!user) {
         return NextResponse.json(
           { message: 'Usuario asignado no existe' },
@@ -98,20 +100,19 @@ export async function POST(request) {
     });
 
     const savedTicket = await newTicket.save();
-
+    console.log('Nuevo ticket creado:', savedTicket);
     // Enviar notificación si hay usuario asignado
-    if (assignedTo) {
-      await sendNotification(
-        savedTicket,
-        assignedTo,
-        {
-          id: token.sub,
-          name: token.name, // Si el token incluye el nombre
-          email: token.email, // Si el token incluye el email
-        },
-        'creation'
-      );
-    }
+    console.log('Enviando notificación al usuario asignado:', user.email);
+    await sendNotification(
+      savedTicket,
+      user.email,
+      {
+        id: token.sub,
+        name: token.name, // Si el token incluye el nombre
+        email: token.email, // Si el token incluye el email
+      },
+      'creation'
+    );
 
     console.log('Ticket creado por usuario:', token.sub);
     return NextResponse.json(savedTicket, { status: 201 });
