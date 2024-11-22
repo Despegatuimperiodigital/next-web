@@ -39,6 +39,21 @@ export async function POST(req, { params }) {
       });
     }
 
+    // Buscar usuario asignado antes de crear el comentario
+    let user = null;
+    if (ticket.assignedTo) {
+      console.log('Buscando usuario asignado:', ticket.assignedTo);
+      user = await User.findById(ticket.assignedTo);
+      if (!user) {
+        console.log('El usuario asignado no existe.');
+        return new Response(
+          JSON.stringify({ message: 'Usuario asignado no existe' }),
+          { status: 404 }
+        );
+      }
+      console.log('Usuario asignado encontrado:', user._id);
+    }
+
     // Obtener contenido del comentario
     const { content } = await req.json();
     if (!content) {
@@ -62,20 +77,9 @@ export async function POST(req, { params }) {
     console.log('Comentarios actuales del ticket:', ticket.comments);
 
     // Enviar notificación si el ticket tiene un usuario asignado
-    if (ticket.assignedTo) {
-      console.log('Iniciando proceso de notificación...');
-      console.log('Buscando usuario asignado:', ticket.assignedTo);
-      const user = await User.findById(ticket.assignedTo);
-      console.log('Usuario asignado encontrado:', ticket.assignedTo);
-      if (!user) {
-        return new Response(
-          JSON.stringify({ message: 'Usuario asignado no existe' }),
-          { status: 404 }
-        );
-      }
-      console.log('Usuario asignado encontrado:', user._id);
+    if (user) {
+      console.log('Enviando notificación...');
       try {
-        console.log('Intentando enviar notificación...');
         await sendNotification(
           ticket,
           ticket.assignedTo,
@@ -88,7 +92,12 @@ export async function POST(req, { params }) {
       } catch (notificationError) {
         console.error('Error al enviar la notificación:', notificationError);
       }
+    } else {
+      console.log(
+        'El ticket no tiene un usuario asignado, omitiendo notificación.'
+      );
     }
+
     return new Response(JSON.stringify(comment), { status: 201 });
   } catch (error) {
     console.error('Error al agregar comentario:', error);

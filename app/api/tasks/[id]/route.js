@@ -92,15 +92,16 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
-
     console.log('Ticket encontrado:', existingTicket);
 
+    console.log('Valor de assignedTo:', assignedTo);
+    console.log(
+      'Valor actual de assignedTo en el ticket:',
+      existingTicket.ticket.assignedTo.toString()
+    );
     // Verificar si se está reasignando el ticket
     let user = null;
-    if (
-      assignedTo &&
-      assignedTo !== existingTicket.ticket.assignedTo.toString()
-    ) {
+    if (assignedTo) {
       console.log('Usuario asignado encontrado:', assignedTo);
       user = await User.findById(assignedTo);
       if (!user) {
@@ -128,7 +129,10 @@ export async function PUT(request, { params }) {
     console.log('Ticket actualizado:', updatedTicket);
 
     // Enviar notificación si hay reasignación
-    if (user) {
+    if (
+      assignedTo &&
+      assignedTo !== existingTicket.ticket.assignedTo.toString()
+    ) {
       console.log(
         'Enviando notificación al nuevo usuario asignado:',
         user.email
@@ -143,14 +147,11 @@ export async function PUT(request, { params }) {
         },
         'reassignment'
       );
-    }
-
-    // Enviar notificación de actualización si no hubo reasignación
-    if (
+    } else if (
       !assignedTo ||
       assignedTo === existingTicket.ticket.assignedTo.toString()
     ) {
-      console.log('Enviando notificación de actualización');
+      // Enviar notificación de actualización si no hubo reasignación
       const assignedUser = await User.findById(
         existingTicket.ticket.assignedTo
       );
@@ -161,7 +162,10 @@ export async function PUT(request, { params }) {
         );
       }
 
-      // obtener el correo del usuario asignado
+      console.log(
+        'Enviando notificación de actualización al usuario asignado:',
+        assignedUser.email
+      );
       await sendNotification(
         updatedTicket,
         assignedUser.email,
@@ -173,7 +177,6 @@ export async function PUT(request, { params }) {
         'update'
       );
     }
-
     return NextResponse.json(updatedTicket, { status: 200 });
   } catch (error) {
     console.error('Error al actualizar ticket:', error);
