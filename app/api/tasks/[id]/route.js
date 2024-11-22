@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+import { NextResponse } from 'next/server';
 import { connect } from '../../../../lib/db/connect';
 import { getToken } from 'next-auth/jwt';
 import Ticket from '../../../../lib/db/models/Ticket';
-import Comment from '../../../../lib/db/models/Comment';
+import User from '../../../../lib/db/models/User';
 import { sendNotification } from '../../../../lib/services/notificationService';
 
 export async function GET(req, { params }) {
@@ -35,120 +36,149 @@ export async function GET(req, { params }) {
   }
 }
 
-export async function PUT(req, { params }) {
-  await connect();
-  const { id } = await params;
-  console.log('ID de ticket:', id);
-
-  const { ticket } = await req.json();
-  console.log('Ticket recibido:', ticket);
-  if (!ticket) {
-    return new Response(JSON.stringify({ message: 'Ticket es requerido' }), {
-      status: 400,
-    });
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return new Response(JSON.stringify({ message: 'ID de ticket inválido' }), {
-      status: 400,
-    });
-  }
-
+export async function PUT(request, { params }) {
   try {
-    const token = await getToken({ req });
-    console.log('Token:', token);
+    await connect();
+    console.log('Conexión a la base de datos establecida correctamente');
+
+    // Obtener el token del request
+    const token = await getToken({ req: request });
+
     if (!token) {
-      return new Response(
-        JSON.stringify({ message: 'No autorizado, token no encontrado' }),
+      return NextResponse.json(
+        { message: 'Usuario no autenticado' },
         { status: 401 }
       );
     }
 
-    const userEmail = token.email;
-    console.log('Conectando a la base de datos...');
-    console.log('Buscando ticket con ID:', id);
+    const { id } = await params; // iD del ticket que se va a actualizar
+    console.log('ID de ticket:', id);
+
+    // Verificar si el ID de ticket es válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { message: 'ID de ticket inválido' },
+        { status: 400 }
+      );
+    }
+
+    // Obtener datos del ticket
+    const data = await request.json();
+    const { ticket } = data;
+
+    if (!ticket) {
+      return NextResponse.json(
+        { message: 'Ticket es requerido' },
+        { status: 400 }
+      );
+    }
+
+    const {
+      name,
+      title,
+      description,
+      priority,
+      assignedTo,
+      dueDate,
+      link,
+      image_url,
+    } = ticket;
+
+    // Buscar ticket existente
     const existingTicket = await Ticket.findById(id);
     if (!existingTicket) {
-      return new Response(JSON.stringify({ message: 'Ticket no encontrado' }), {
-        status: 404,
-      });
+      return NextResponse.json(
+        { message: 'Ticket no encontrado' },
+        { status: 404 }
+      );
     }
+
     console.log('Ticket encontrado:', existingTicket);
-    // Verificar estado "closed"
-    if (ticket.status === 'closed' && existingTicket.status !== 'closed') {
-      await existingTicket.closeTicket();
-      await sendNotification(
-        existingTicket,
-        existingTicket.assignedTo,
-        userEmail,
-        'closure'
-      );
-      return new Response(
-        JSON.stringify({ message: 'Ticket cerrado exitosamente' }),
-        { status: 200 }
-      );
-    }
 
-    // verificar si esta siendo reasigando el ticket
-    console.log('Actualizando ticket...');
-    const previousAssignedTo = ticket.assignedTo;
-    const updatedTicket = await Ticket.findByIdAndUpdate(id, ticket, {
-      new: true,
-    });
-    console.log('Actualizando ticket...');
-    if (!updatedTicket) {
-      return new Response(JSON.stringify({ message: 'Ticket no encontrado' }), {
-        status: 404,
-      });
-    }
-
-    // Notificar si es que hubo reasignación de usuarios.
-    if (ticket.assignedTo && ticket.assignedTo !== previousAssignedTo) {
-      console.log('Reasignando ticket...');
-
-      // Buscar al nuevo asignado
-      let newUser = null;
-      if (ticket.assignedTo) {
-        newUser = await User.findById(ticket.assignedTo);
-        if (!newUser) {
-          return new Response(
-            JSON.stringify({ message: 'Usuario asignado no encontrado' }),
-            {
-              status: 404,
-            }
-          );
-        }
+    // Verificar si se está reasignando el ticket
+    let user = null;
+    if (
+      assignedTo &&
+      assignedTo !== existingTicket.ticket.assignedTo.toString()
+    ) {
+      console.log('Usuario asignado encontrado:', assignedTo);
+      user = await User.findById(assignedTo);
+      if (!user) {
+        return NextResponse.json(
+          { message: 'Usuario asignado no existe' },
+          { status: 404 }
+        );
       }
-      await sendNotification(
-        updatedTicket,
-        previousAssignedTo,
-        userEmail,
-        'reassignment-old'
+    }
+
+    // Actualizar el ticket
+    existingTicket.ticket.name = name || existingTicket.ticket.name;
+    existingTicket.ticket.title = title || existingTicket.ticket.title;
+    existingTicket.ticket.description =
+      description || existingTicket.ticket.description;
+    existingTicket.ticket.priority = priority || existingTicket.ticket.priority;
+    existingTicket.ticket.assignedTo =
+      assignedTo || existingTicket.ticket.assignedTo;
+    existingTicket.ticket.dueDate = dueDate || existingTicket.ticket.dueDate;
+    existingTicket.ticket.link = link || existingTicket.ticket.link;
+    existingTicket.ticket.image_url =
+      image_url || existingTicket.ticket.image_url;
+
+    const updatedTicket = await existingTicket.save();
+    console.log('Ticket actualizado:', updatedTicket);
+
+    // Enviar notificación si hay reasignación
+    if (user) {
+      console.log(
+        'Enviando notificación al nuevo usuario asignado:',
+        user.email
       );
       await sendNotification(
         updatedTicket,
-        updatedTicket.assignedTo,
-        userEmail,
-        'reassignment-new'
+        user.email,
+        {
+          id: token.sub,
+          name: token.name,
+          email: token.email,
+        },
+        'reassignment'
       );
     }
 
-    console.log('Enviando notificación de actualización...');
-    //Notificación para actualizar
-    await sendNotification(
-      updatedTicket,
-      updatedTicket.assignedTo,
-      userEmail,
-      'update'
-    );
-    return new Response(JSON.stringify(updatedTicket), { status: 200 });
+    // Enviar notificación de actualización si no hubo reasignación
+    if (
+      !assignedTo ||
+      assignedTo === existingTicket.ticket.assignedTo.toString()
+    ) {
+      console.log('Enviando notificación de actualización');
+      const assignedUser = await User.findById(
+        existingTicket.ticket.assignedTo
+      );
+      if (!assignedUser) {
+        return NextResponse.json(
+          { message: 'Usuario asignado no encontrado' },
+          { status: 404 }
+        );
+      }
+
+      // obtener el correo del usuario asignado
+      await sendNotification(
+        updatedTicket,
+        assignedUser.email,
+        {
+          id: token.sub,
+          name: token.name,
+          email: token.email,
+        },
+        'update'
+      );
+    }
+
+    return NextResponse.json(updatedTicket, { status: 200 });
   } catch (error) {
-    console.error('Error detallado al actualizar ticket:', error);
-    return new Response(
-      JSON.stringify({
-        message: 'Error al actualizar ticket',
-        errorDetails: error.message,
-      }),
+    console.error('Error al actualizar ticket:', error);
+    return NextResponse.json(
+      { message: 'Error al actualizar el ticket' },
       { status: 500 }
     );
   }
@@ -172,16 +202,6 @@ export async function DELETE(req, { params }) {
       return new Response(JSON.stringify({ message: 'Ticket no encontrado' }), {
         status: 404,
       });
-    }
-
-    // Notificar que el ticket ha sido eliminado
-    if (deletedTicket.assignedTo) {
-      await sendNotification(
-        deletedTicket,
-        deletedTicket.assignedTo,
-        req.user,
-        'deletion'
-      );
     }
 
     // El ticket fue eliminado exitosamente
