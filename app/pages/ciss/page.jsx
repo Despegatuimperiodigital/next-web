@@ -1,9 +1,192 @@
 'use client'
 
-import { useState } from 'react'
+import { useState,useEffect,useRef  } from 'react'
 
-import { Building, Search, TrendingUp, Users, ChevronRight, Menu, X, MapPin, Home, DollarSign, Bath, BedDouble, Calendar, Star } from "lucide-react"
+import { Building, Search, TrendingUp, Users,  Menu, X, MapPin, Home, DollarSign, Bath, BedDouble, Calendar, Star ,ChevronLeft, ChevronRight} from "lucide-react"
 
+const propertiesData = [
+  {
+      "title": "Fuentes de Lomas II",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/09/Fuentes-de-Lomas-II-Destacada-1024x671.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-lomas-2/",
+      "link_target_attr": "_blank",
+      "price": "3.005 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Concepción",
+      "baños": "2",
+      "tipo_subsidio": "En Verde",
+      "tipo_de_proyecto": "Nuevo Proyecto",
+      "m2": "67.1 m2"
+  },
+  {
+      "title": "Fuentes de Piedra IV",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2023/06/fuentes-de-piedra-iv-1024x671.png",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-piedra-iv/",
+      "price": "2.600 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Concepción",
+      "baños": "2",
+      "tipo_subsidio": "DS19",
+      "tipo_de_proyecto": "En Verde",
+      "m2": "59.5 a 66.5"
+  },
+  {
+      "title": "Fuentes de Miguel Collao",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2024/02/imagen-destacada-Miguel-Collao.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-miguel-collao/",
+      "price": "3.340 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Concepción",
+      "baños": "2",
+      "tipo_subsidio": "En Verde",
+      "tipo_de_proyecto": "Nuevo Proyecto",
+      "m2": "67.1 m2"
+  },
+  {
+      "title": "Fuentes de Porvenir 2",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2024/03/Fuentes-de-porvenir-2.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-porvenir-2/",
+      "price": "1.600 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Chiguayante",
+      "baños": "1 a 2",
+      "tipo_subsidio": "En verde",
+      "tipo_de_proyecto": "Nuevo Proyecto",
+      "m2": "66,6 m2"
+  },
+  {
+      "title": "Edificio Peumayen",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/11/peumayén.png",
+      "link": "https://ciss.cl/Propiedades/edificio-peumayen-3/",
+      "price": "4.790 UF",
+      "habitaciones": "2 a 3 Dorms",
+      "ciudad": "Lomas San Sebastián",
+      "baños": "2",
+      "tipo_subsidio": "Inversión",
+      "tipo_de_proyecto": "En Verde",
+      "m2": "66.94 a 114.35 m2"
+  },
+  {
+      "title": "Parque Huertos",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/11/parque-huertos.png",
+      "link": "https://ciss.cl/Propiedades/parque-huertos-2/",
+      "price": "3.009 UF",
+      "habitaciones": "1 a 3 Dorms",
+      "ciudad": "Huertos Familiares",
+      "baños": "1 a 2",
+      "tipo_subsidio": "Inversión",
+      "tipo_de_proyecto": "Venta en Verde",
+      "m2": "42.91 a 112.76"
+  },
+  {
+      "title": "Mirador Oceánico",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/07/mirador.png",
+      "link": "https://ciss.cl/Propiedades/mirador-oceanico/",
+      "price": "3.772 UF",
+      "habitaciones": "1 a 3 Dorms",
+      "ciudad": "Andalue",
+      "baños": "1 a 3",
+      "tipo_subsidio": "Inversión",
+      "tipo_de_proyecto": "En Verde",
+      "m2": "58.32 a 168.12 m2"
+  },
+  {
+      "title": "Edificio Rozas Condell",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/07/Edificio-Rozas.jpg",
+      "link": "https://ciss.cl/Propiedades/edificio-rozas-condell/",
+      "price": "2.613 UF",
+      "habitaciones": "1 a 3 Dorms",
+      "ciudad": "Concepción",
+      "baños": "1 a 2",
+      "tipo_subsidio": "Inversión",
+      "tipo_de_proyecto": "En Verde",
+      "m2": "34.02 a 67,3"
+  },
+  {
+      "title": "Edificio Roosevelt",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/01/Roosevelt-destacada-1024x671.jpg",
+      "link": "https://ciss.cl/Propiedades/edificio-roosevelt/",
+      "price": "8.000 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Concepción",
+      "baños": "3",
+      "tipo_subsidio": "Inversión",
+      "tipo_de_proyecto": "En Verde",
+      "m2": "111.65 a 189.33"
+  },
+  {
+      "title": "Fuentes de Porvenir",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/03/imagen-destacada.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-porvenir/",
+      "price": "2.400 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Chiguayante",
+      "baños": "2",
+      "tipo_subsidio": "DS19",
+      "tipo_de_proyecto": "Entrega Inmediata",
+      "m2": "66,5 m2"
+  },
+  {
+      "title": "Fuentes de Rucalhue 2",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/01/imagen-destacada-2-1024x671.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-rucalhue-2/",
+      "price": "2.480 UF",
+      "habitaciones": "2 a 3 Dorms",
+      "ciudad": "Hualpén",
+      "baños": "2",
+      "tipo_subsidio": "DS19",
+      "tipo_de_proyecto": "En verde",
+      "m2": "56,4 a 60,9m2"
+  },
+  {
+      "title": "Fuentes de San Pedro",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/01/JYG5732-1-1024x683.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-san-pedro/",
+      "price": "2.100 UF",
+      "habitaciones": "2 a 3 Dorms",
+      "ciudad": "San Pedro de la Paz",
+      "baños": "2",
+      "tipo_subsidio": "DS19",
+      "tipo_de_proyecto": "Entrega Inmediata",
+      "m2": "56 a 60,8m2"
+  },
+  {
+      "title": "Edificio New Center",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/01/Roosevelt-destacada-1536x1006-1-1024x671.jpg",
+      "link": "https://ciss.cl/Propiedades/edificio-new-center/",
+      "price": "3.023 UF",
+      "habitaciones": "1 a 2 Dorms",
+      "ciudad": "Concepción",
+      "baños": "1 a 2",
+      "tipo_subsidio": "Inversión",
+      "tipo_de_proyecto": "",
+      "m2": "Desde 41.31 a 71.8"
+  },
+  {
+      "title": "Fuentes de Prats",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2022/01/portada-1024x671.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-prats/",
+      "price": "1.980 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Coronel",
+      "baños": "2",
+      "tipo_subsidio": "DS1-T3",
+      "tipo_de_proyecto": "Entrega Inmediata",
+      "m2": "61,6 a 67,2m2"
+  },
+  {
+      "title": "Fuentes de Aeroparque",
+      "thumbnail": "https://ciss.cl/wp-content/uploads/2024/04/Exterior-condominio-1024x576.jpg",
+      "link": "https://ciss.cl/Propiedades/fuentes-de-aeroparque/",
+      "price": "3.799 UF",
+      "habitaciones": "3 Dorms",
+      "ciudad": "Concepción",
+      "baños": "2",
+      "tipo_subsidio": "Inversión",
+      "tipo_de_proyecto": "Nuevo proyecto",
+      "m2": "73"
+  }
+]
 
 // UI Components
 const Button = ({ children, className, variant, ...props }) => {
@@ -29,98 +212,277 @@ const Button = ({ children, className, variant, ...props }) => {
     return <div className={`p-6 ${className}`} {...props}>{children}</div>
   }
 
+
+ 
+
+
+    const PropertyCard = ({ properties }) => {
+      const [currentIndex, setCurrentIndex] = useState(0)
+      const [isAnimating, setIsAnimating] = useState(false)
+      const containerRef = useRef(null)
+    console.log(properties)
+      const visibleCards = 3
+      const maxIndex = Math.max(0, properties.length - visibleCards)
+    
+      const next = () => {
+        if (currentIndex < maxIndex && !isAnimating) {
+          setIsAnimating(true)
+          setCurrentIndex(prev => Math.min(prev + 1, maxIndex))
+        }
+      }
+    
+      const prev = () => {
+        if (currentIndex > 0 && !isAnimating) {
+          setIsAnimating(true)
+          setCurrentIndex(prev => Math.max(prev - 1, 0))
+        }
+      }
+    
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          setIsAnimating(false)
+        }, 300)
+        return () => clearTimeout(timer)
+      }, [currentIndex])
+    
+      return (
+        <div className="relative w-full">
+          {/* Navigation Buttons */}
+          <div className="absolute inset-y-0 left-0 z-10 flex items-center">
+            <button
+              onClick={prev}
+              disabled={currentIndex === 0}
+              className={`p-2 rounded-full bg-white shadow-lg text-gray-600 hover:text-gray-900 transition-colors 
+                ${currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="absolute inset-y-0 right-0 z-10 flex items-center">
+            <button
+              onClick={next}
+              disabled={currentIndex === maxIndex}
+              className={`p-2 rounded-full bg-white shadow-lg text-gray-600 hover:text-gray-900 transition-colors
+                ${currentIndex === maxIndex ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
+    
+          {/* Cards Container */}
+          <div className="overflow-hidden">
+            <div 
+              ref={containerRef}
+              className="flex transition-transform duration-300 ease-in-out"
+              style={{
+                transform: `translateX(-${currentIndex * (100 / visibleCards)}%)`,
+              }}
+            >
+              {properties.map((property, index) => (
+                <div
+                  key={index}
+                  className="w-full min-w-[33.333%] px-4"
+                >
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <img 
+                      src={property.thumbnail} 
+                      alt={property.title} 
+                      className="w-full h-48 object-cover"
+                    />
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{property.title}</h3>
+                      <p className="text-sm text-gray-500 mb-4 flex items-center">
+                        <MapPin className="h-4 w-4 mr-1 text-[rgb(253,74,92)]" />
+                        {property.ciudad}
+                      </p>
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center">
+                          <DollarSign className="h-5 w-5 text-green-600 mr-1" />
+                          <span className="font-semibold text-gray-900">{property.price}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
+                        <div className="flex items-center">
+                          <BedDouble className="h-4 w-4 mr-1 text-gray-400" />
+                          {property.habitaciones}
+                        </div>
+                        <div className="flex items-center">
+                          <Bath className="h-4 w-4 mr-1 text-gray-400" />
+                          {property.baños} Baños
+                        </div>
+                        <div className="flex items-center col-span-2">
+                          <Home className="h-4 w-4 mr-1 text-gray-400" />
+                          {property.m2}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {property.tipo_subsidio && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            {property.tipo_subsidio}
+                          </span>
+                        )}
+                        {property.tipo_de_proyecto && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            {property.tipo_de_proyecto}
+                          </span>
+                        )}
+                      </div>
+                      <Button variant="outline" className="w-full">
+                        Ver detalles
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
   
 export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  
+
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
-            <div className="flex justify-start lg:w-0 lg:flex-1">
-              <a href="#" className="flex items-center">
-                <span className="sr-only">CISS Inmobiliaria</span>
-                <Building className="h-8 w-auto sm:h-10 text-[rgb(253,74,92)]" />
-                <span className="ml-2 text-xl font-bold text-gray-900">CISS Inmobiliaria</span>
-              </a>
+       <header className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <a href="#" className="block">
+              <img 
+                src="https://ciss.cl/wp-content/uploads/2021/12/Logo-CISS-1.png" 
+                alt="CISS Inmobiliaria" 
+                className="h-16 w-auto"
+              />
+            </a>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <span className="sr-only">Abrir menú</span>
+              {isMenuOpen ? (
+                <X className="h-6 w-6" aria-hidden="true" />
+              ) : (
+                <Menu className="h-6 w-6" aria-hidden="true" />
+              )}
+            </Button>
+          </div>
+
+          {/* Desktop navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <a href="#" className="text-[rgb(253,74,92)] font-medium border-b-2 border-[rgb(253,74,92)] pb-1">
+              Inicio
+            </a>
+            <a href="#" className="text-gray-700 font-medium hover:text-[rgb(253,74,92)] transition-colors">
+              Invierte
+            </a>
+            <a href="#" className="text-gray-700 font-medium hover:text-[rgb(253,74,92)] transition-colors">
+              Usa tu subsidio
+            </a>
+            <a href="#" className="text-gray-700 font-medium hover:text-[rgb(253,74,92)] transition-colors">
+              Financiamiento
+            </a>
+            <a href="#" className="text-gray-700 font-medium hover:text-[rgb(253,74,92)] transition-colors">
+              Postventa
+            </a>
+            <a href="#" className="text-gray-700 font-medium hover:text-[rgb(253,74,92)] transition-colors">
+              Nosotros
+            </a>
+            <a href="#" className="text-gray-700 font-medium hover:text-[rgb(253,74,92)] transition-colors">
+              Blog
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            <a href="#" className="block px-3 py-2 text-[rgb(253,74,92)] font-medium">
+              Inicio
+            </a>
+            <a href="#" className="block px-3 py-2 text-gray-700 font-medium hover:text-[rgb(253,74,92)]">
+              Invierte
+            </a>
+            <a href="#" className="block px-3 py-2 text-gray-700 font-medium hover:text-[rgb(253,74,92)]">
+              Usa tu subsidio
+            </a>
+            <a href="#" className="block px-3 py-2 text-gray-700 font-medium hover:text-[rgb(253,74,92)]">
+              Financiamiento
+            </a>
+            <a href="#" className="block px-3 py-2 text-gray-700 font-medium hover:text-[rgb(253,74,92)]">
+              Postventa
+            </a>
+            <a href="#" className="block px-3 py-2 text-gray-700 font-medium hover:text-[rgb(253,74,92)]">
+              Nosotros
+            </a>
+            <a href="#" className="block px-3 py-2 text-gray-700 font-medium hover:text-[rgb(253,74,92)]">
+              Blog
+            </a>
+          </div>
+        </div>
+      )}
+    </header>
+
+      <main>
+      <section className="relative">
+    {/* Background image container */}
+    <div className="absolute inset-0 overflow-hidden">
+      <img 
+        src="https://ciss.cl/wp-content/uploads/2024/03/bannerHome-escritorio.jpg"
+        alt="Concepción y alrededores" 
+        className="w-full h-full object-cover"
+      />
+      {/* Overlay para mejorar la legibilidad del texto */}
+      <div className="absolute inset-0 bg-black/40" />
+    </div>
+
+    {/* Content */}
+    <div className="relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+        <div className="text-center">
+          <h1 className="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl">
+            <span className="block">Construyendo el futuro de</span>
+            <span className="block text-[rgb(253,74,92)]">Concepción y alrededores</span>
+          </h1>
+          <p className="mt-3 max-w-md mx-auto text-base text-gray-100 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            Descubre nuestros proyectos inmobiliarios y oportunidades de inversión en las mejores ubicaciones de la región.
+          </p>
+          <div className="mt-10 max-w-md mx-auto sm:flex sm:justify-center md:mt-12">
+            <div className="relative rounded-md shadow-sm w-full sm:w-auto">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              </div>
+              <Input
+                type="text"
+                placeholder="Buscar proyectos o propiedades..."
+                className="pl-10 pr-4 py-3 w-full sm:w-96 focus:ring-[rgb(253,74,92)] focus:border-[rgb(253,74,92)]"
+              />
             </div>
-            <div className="-mr-2 -my-2 md:hidden">
-              <Button
-                variant="ghost"
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[rgb(253,74,92)]"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                <span className="sr-only">Abrir menú</span>
-                {isMenuOpen ? (
-                  <X className="h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <Menu className="h-6 w-6" aria-hidden="true" />
-                )}
-              </Button>
-            </div>
-            <nav className="hidden md:flex space-x-10">
-              <a href="#" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Propiedades
-              </a>
-              <a href="#" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Proyectos
-              </a>
-              <a href="#" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Inversiones
-              </a>
-              <a href="#" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Sobre Nosotros
-              </a>
-              <a href="#" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Contacto
-              </a>
-            </nav>
-            <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
-              <Button variant="ghost" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Iniciar sesión
-              </Button>
-              <Button className="ml-8 bg-[rgb(253,74,92)] hover:bg-[rgb(253,74,92)]/90 text-white">
-                Registrarse
+            <div className="mt-3 sm:mt-0 sm:ml-3">
+              <Button className="w-full bg-[rgb(253,74,92)] hover:bg-[rgb(253,74,92)]/90 text-white py-3 px-6">
+                Buscar
               </Button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
+    </div>
+  </section>
 
-      <main>
-        <section className="relative bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
-            <div className="text-center">
-              <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                <span className="block">Construyendo el futuro de</span>
-                <span className="block text-[rgb(253,74,92)]">Concepción y alrededores</span>
-              </h1>
-              <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-                Descubre nuestros proyectos inmobiliarios y oportunidades de inversión en las mejores ubicaciones de la región.
-              </p>
-              <div className="mt-10 max-w-md mx-auto sm:flex sm:justify-center md:mt-12">
-                <div className="relative rounded-md shadow-sm w-full sm:w-auto">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <Input
-                    type="text"
-                    placeholder="Buscar proyectos o propiedades..."
-                    className="pl-10 pr-4 py-3 w-full sm:w-96 focus:ring-[rgb(253,74,92)] focus:border-[rgb(253,74,92)]"
-                  />
-                </div>
-                <div className="mt-3 sm:mt-0 sm:ml-3">
-                  <Button className="w-full bg-[rgb(253,74,92)] hover:bg-[rgb(253,74,92)]/90 text-white py-3 px-6">
-                    Buscar
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-20 bg-white">
+         <section className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
@@ -131,42 +493,10 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="mt-20 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: "Torre Bicentenario",
-                  location: "Concepción Centro",
-                  description: "Apartamentos de lujo con vistas panorámicas al río Biobío.",
-                  image: "/placeholder.svg?height=400&width=600&text=Torre+Bicentenario",
-                },
-                {
-                  title: "Condominio Los Aromos",
-                  location: "San Pedro de la Paz",
-                  description: "Casas familiares en un entorno natural y seguro.",
-                  image: "/placeholder.svg?height=400&width=600&text=Condominio+Los+Aromos",
-                },
-                {
-                  title: "Edificio Smart Living",
-                  location: "Talcahuano",
-                  description: "Apartamentos inteligentes con tecnología de punta y eficiencia energética.",
-                  image: "/placeholder.svg?height=400&width=600&text=Edificio+Smart+Living",
-                },
-              ].map((project, index) => (
-                <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <img src={project.image} alt={project.title} className="w-full h-48 object-cover" />
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.title}</h3>
-                    <p className="text-sm text-gray-500 mb-4 flex items-center">
-                      <MapPin className="h-4 w-4 mr-1 text-[rgb(253,74,92)]" />
-                      {project.location}
-                    </p>
-                    <p className="text-gray-600 mb-4">{project.description}</p>
-                    <Button variant="outline" className="w-full">
-                      Ver detalles
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="mt-20 ">
+             
+                <PropertyCard properties={propertiesData} />
+         
             </div>
             <div className="mt-12 text-center">
               <Button className="bg-[rgb(253,74,92)] hover:bg-[rgb(253,74,92)]/90 text-white">
@@ -187,80 +517,10 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="mt-20 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: "Fuentes de Porvenir 2",
-                  location: "Chiguayante",
-                  price: "Desde 2.400 UF",
-                  bedrooms: "3 Dorms",
-                  bathrooms: "1 a 2 Baños",
-                  area: "66,6 m2 Totales",
-                  status: ["Nuevo Proyecto", "En verde"],
-                  image: "/placeholder.svg?height=200&width=300&text=Fuentes+de+Porvenir+2"
-                },
-                {
-                  title: "Fuentes de Aeroparque",
-                  location: "Concepción",
-                  price: "Desde 3799 UF",
-                  bedrooms: "3 Dorms",
-                  bathrooms: "2 Baños",
-                  area: "73 Totales",
-                  status: ["Nuevo proyecto", "Inversión"],
-                  image: "/placeholder.svg?height=200&width=300&text=Fuentes+de+Aeroparque"
-                },
-                {
-                  title: "Parque Huertos",
-                  location: "Huertos Familiares",
-                  price: "Desde 3.009 UF",
-                  bedrooms: "1 a 3 Dorms",
-                  bathrooms: "1 a 2 Baños",
-                  area: "42.91 a 112.76 Totales",
-                  status: ["Venta en Verde", "Inversión"],
-                  image: "/placeholder.svg?height=200&width=300&text=Parque+Huertos"
-                },
-              ].map((project, index) => (
-                <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <img src={project.image} alt={project.title} className="w-full h-48 object-cover" />
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.title}</h3>
-                    <p className="text-sm text-gray-500 mb-4 flex items-center">
-                      <MapPin className="h-4 w-4 mr-1 text-[rgb(253,74,92)]" />
-                      {project.location}
-                    </p>
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex items-center">
-                        <DollarSign className="h-5 w-5 text-green-600 mr-1" />
-                        <span className="font-semibold text-gray-900">{project.price}</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
-                      <div className="flex items-center">
-                        <BedDouble className="h-4 w-4 mr-1 text-gray-400" />
-                        {project.bedrooms}
-                      </div>
-                      <div className="flex items-center">
-                        <Bath className="h-4 w-4 mr-1 text-gray-400" />
-                        {project.bathrooms}
-                      </div>
-                      <div className="flex items-center col-span-2">
-                        <Home className="h-4 w-4 mr-1 text-gray-400" />
-                        {project.area}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.status.map((status, i) => (
-                        <span key={i} className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                          {status}
-                        </span>
-                      ))}
-                    </div>
-                    <Button variant="outline" className="w-full">
-                      Conocer más
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="mt-20">
+             
+                <PropertyCard   properties={propertiesData.filter(p => p.tipo_subsidio === "Inversión")}  />
+         
             </div>
             <div className="mt-12 text-center">
               <Button className="bg-[rgb(253,74,92)] hover:bg-[rgb(253,74,92)]/90 text-white">
