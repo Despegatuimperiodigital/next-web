@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, Variants } from 'framer-motion'  // Añadido Variants aquí
 import { BarChart3, ChevronRight, DollarSign, LineChart, Smartphone, ShoppingCart, Target, TrendingUp, Users, Search } from 'lucide-react'
 import Image from 'next/image'
 import { Nunito } from 'next/font/google'
@@ -19,21 +19,32 @@ const getLogoUrl = (bgColor: string) => {
 }
 
 export default function Component() {
-  const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.5 }
-  }
-
-  const containerVariants = {
-    initial: { opacity: 0 },
-    animate: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
+    const fadeIn: Variants = {
+      initial: { 
+        opacity: 0, 
+        y: 20 
+      },
+      animate: { 
+        opacity: 1, 
+        y: 0,
+        transition: { 
+          duration: 0.5 
+        }
       }
     }
-  }
+  
+    const containerVariants: Variants = {
+      initial: { 
+        opacity: 0 
+      },
+      animate: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.1
+        }
+      }
+    }
+  
 
   return (
     <div className={`min-h-screen bg-background py-12 ${nunito.className}`}>
