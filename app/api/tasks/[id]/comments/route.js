@@ -8,9 +8,8 @@ import { getToken } from 'next-auth/jwt';
 
 export async function POST(req, { params }) {
   await connect();
-
   const { id: ticketId } = await params;
-  console.log('Ticket ID recibido:', ticketId);
+
   // Validaciones de entrada
   if (!ticketId || !mongoose.Types.ObjectId.isValid(ticketId)) {
     return new Response(
@@ -18,7 +17,6 @@ export async function POST(req, { params }) {
       { status: 400 }
     );
   }
-  console.log('ticketId es válido:', mongoose.Types.ObjectId.isValid(ticketId));
 
   try {
     // Verificar autenticación
@@ -31,28 +29,35 @@ export async function POST(req, { params }) {
     }
 
     // Buscar ticket
-    const ticket = await Ticket.findById(ticketId);
+    const ticket = await Ticket.findById(ticketId).populate(
+      'ticket.assignedTo'
+    );
     if (!ticket) {
-      console.log('Ticket no encontrado:', ticketId);
       return new Response(JSON.stringify({ message: 'Ticket no encontrado' }), {
         status: 404,
       });
     }
 
-    // Buscar usuario asignado antes de crear el comentario
+    //Buscar usuario asignado antes de crear el comentario
+    console.log('assignedTo del ticket:', ticket.ticket.assignedTo);
+    const assignedTo = ticket.ticket.assignedTo;
     let user = null;
-    if (ticket.assignedTo) {
-      console.log('Buscando usuario asignado:', ticket.assignedTo);
-      user = await User.findById(ticket.assignedTo);
-      if (!user) {
-        console.log('El usuario asignado no existe.');
-        return new Response(
-          JSON.stringify({ message: 'Usuario asignado no existe' }),
-          { status: 404 }
-        );
-      }
-      console.log('Usuario asignado encontrado:', user._id);
+    if (!assignedTo) {
+      console.error('El assignedTo del ticket no esta.');
+      return new Response(
+        JSON.stringify({ message: 'No se pudo enviar la notificación' }),
+        { status: 400 }
+      );
     }
+    user = await User.findById(assignedTo._id);
+    if (!user) {
+      console.error('No se encontró el usuario asignado.');
+      return new Response(
+        JSON.stringify({ message: 'No se pudo encontrar al usuario asignado' }),
+        { status: 404 }
+      );
+    }
+    console.log('Enviando notificación a:', user.email);
 
     // Obtener contenido del comentario
     const { content } = await req.json();
@@ -66,7 +71,7 @@ export async function POST(req, { params }) {
     // Crear el comentario
     const comment = new Comment({
       content,
-      author: token.sub,
+      author: new mongoose.Types.ObjectId(token.sub),
       ticket: ticketId,
     });
     await comment.save();
@@ -74,27 +79,25 @@ export async function POST(req, { params }) {
     // Agregar comentario al ticket
     ticket.comments.push(comment._id);
     await ticket.save();
-    console.log('Comentarios actuales del ticket:', ticket.comments);
 
     // Enviar notificación si el ticket tiene un usuario asignado
-    if (user) {
-      console.log('Enviando notificación...');
-      try {
-        await sendNotification(
-          ticket,
-          ticket.assignedTo,
-          { id: token.sub, name: token.name, email: token.email },
-          comment.author,
-          'comment_creation',
-          content
-        );
-        console.log('Notificación enviada exitosamente');
-      } catch (notificationError) {
-        console.error('Error al enviar la notificación:', notificationError);
-      }
+    if (assignedTo && assignedTo.email) {
+      console.log('Enviando notificación...', assignedTo.email);
+      await sendNotification(
+        comment,
+        assignedTo.email,
+        {
+          id: token.sub,
+          name: token.name,
+          email: token.email,
+        },
+        'comment_creation',
+        ticket
+      );
+      console.log('Notificación enviada exitosamente');
     } else {
-      console.log(
-        'El ticket no tiene un usuario asignado, omitiendo notificación.'
+      console.error(
+        'No se encontró un usuario asignado o no tiene correo electrónico.'
       );
     }
 

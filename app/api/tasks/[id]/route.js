@@ -97,7 +97,7 @@ export async function PUT(request, { params }) {
     console.log('Valor de assignedTo:', assignedTo);
     console.log(
       'Valor actual de assignedTo en el ticket:',
-      existingTicket.ticket.assignedTo.toString()
+      existingTicket.ticket.assignedTo
     );
     // Verificar si se está reasignando el ticket
     let user = null;
@@ -124,6 +124,16 @@ export async function PUT(request, { params }) {
     existingTicket.ticket.link = link || existingTicket.ticket.link;
     existingTicket.ticket.image_url =
       image_url || existingTicket.ticket.image_url;
+
+    if (ticket.status) {
+      if (!['open', 'in-progress', 'closed'].includes(ticket.status)) {
+        return NextResponse.json(
+          { message: `${ticket.status} no es un estado válido` },
+          { status: 400 }
+        );
+      }
+      existingTicket.ticket.status = ticket.status;
+    }
 
     const updatedTicket = await existingTicket.save();
     console.log('Ticket actualizado:', updatedTicket);

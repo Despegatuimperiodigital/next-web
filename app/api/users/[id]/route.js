@@ -1,17 +1,32 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 import { connect } from '../../../../lib/db/connect';
 import User from '../../../../lib/db/models/User';
 
-export async function GET(req, { params }) {
-  const { userId } = params;
-  console.log('User ID recibido:', userId);
-
+export async function GET(req, context) {
   await connect();
   console.log('conexión a la bd');
 
+  // accede a los parámetros desde el contexto
+  const params = await context.params;
+  console.log('Parámetros recibidos:', params);
+
+  const userId = params?.id;
+  console.log('User ID recibido:', userId);
+  if (!userId) {
+    console.log('No se recibió un ID válido');
+    return new Response(
+      JSON.stringify({ message: 'ID de usuario no recibido' }),
+      {
+        status: 400,
+      }
+    );
+  }
+
   // Validar que el userId es un ObjectId válido
   if (!mongoose.Types.ObjectId.isValid(userId)) {
+    console.log('ID inválido recibido:', userId);
     return new Response(JSON.stringify({ message: 'ID de usuario inválido' }), {
       status: 400,
     });
@@ -35,23 +50,21 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  const { userId } = params;
+  const { id } = await params;
+
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json(
+      { error: 'ID de usuario inválido' },
+      { status: 400 }
+    );
+  }
+
   const { name, email, password } = await request.json();
 
   try {
-    // Conectar a la base de datos
     await connect();
 
-    // Validar que el ID de usuario es válido
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return NextResponse.json(
-        { error: 'ID de usuario inválido' },
-        { status: 400 }
-      );
-    }
-
-    // Buscar al usuario por su ID
-    const user = await User.findById(userId);
+    const user = await User.findById(id);
     if (!user) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
@@ -59,55 +72,47 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Actualizar los campos del usuario
     if (name) user.name = name;
     if (email) user.email = email;
-    if (password) {
-      // Si se proporciona una nueva contraseña, se debe encriptar
-      user.password = await hash(password, 12);
-    }
+    if (password) user.password = await bcrypt.hash(password, 12);
 
-    // Guardar los cambios
     await user.save();
 
-    // Preparar la respuesta (sin incluir la contraseña)
-    const updatedUser = {
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-    };
-
     return NextResponse.json(
-      { message: 'Usuario actualizado exitosamente', user: updatedUser },
+      {
+        message: 'Usuario actualizado exitosamente',
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+        },
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error al actualizar el usuario:', error);
+    console.error('Error al actualizar usuario:', error);
     return NextResponse.json(
-      { error: 'Error al actualizar el usuario' },
+      { error: 'Error al actualizar usuario' },
       { status: 500 }
     );
   }
 }
 
 export async function DELETE(request, { params }) {
-  const { userId } = params;
+  const { id: userId } = await params;
+
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    return NextResponse.json(
+      { error: 'ID de usuario inválido' },
+      { status: 400 }
+    );
+  }
 
   try {
-    // Conectar a la base de datos
     await connect();
 
-    // Validar que el ID de usuario es válido
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return NextResponse.json(
-        { error: 'ID de usuario inválido' },
-        { status: 400 }
-      );
-    }
-
-    // Eliminar el usuario por su ID
-    const result = await User.deleteOne({ _id: userId });
-    if (result.deletedCount === 0) {
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
@@ -115,13 +120,20 @@ export async function DELETE(request, { params }) {
     }
 
     return NextResponse.json(
-      { message: 'Usuario eliminado correctamente' },
+      {
+        message: 'Usuario eliminado correctamente',
+        user: {
+          id: deletedUser._id.toString(),
+          name: deletedUser.name,
+          email: deletedUser.email,
+        },
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error al eliminar el usuario:', error);
+    console.error('Error al eliminar usuario:', error);
     return NextResponse.json(
-      { error: 'Error al eliminar el usuario' },
+      { error: 'Error al eliminar usuario' },
       { status: 500 }
     );
   }
