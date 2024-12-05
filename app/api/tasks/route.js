@@ -5,6 +5,7 @@ import User from '../../../lib/db/models/User';
 import { sendNotification } from '../../../lib/services/notificationService';
 import { connect } from '../../../lib/db/connect';
 import { getToken } from 'next-auth/jwt';
+import { handleImageUpload } from '../../../lib/utils/imageUpload';
 
 console.log('Ruta /api/task cargada correctamente');
 
@@ -41,7 +42,6 @@ export async function POST(request) {
 
     // Obtener el token del request
     const token = await getToken({ req: request });
-
     if (!token) {
       return NextResponse.json(
         { message: 'Usuario no autenticado' },
@@ -50,9 +50,22 @@ export async function POST(request) {
     }
 
     // Obtener datos del ticket
-    const data = await request.json();
-    const { ticket } = data;
+    const formData = await request.formData();
+    const rawTicket = formData.get('ticket') || '{}';
+    let ticket;
+    try {
+      ticket = JSON.parse(rawTicket);
+    } catch (error) {
+      console.error('Error al parsear el ticket:', error);
+      return NextResponse.json(
+        { message: "El campo 'ticket' debe ser un JSON válido" },
+        { status: 400 }
+      );
+    }
 
+    const image = formData.get('image');
+    console.log('Ticket Data (raw):', ticket);
+    console.log('Image File:', image);
     if (!ticket) {
       return NextResponse.json(
         { message: 'Ticket es requerido' },
@@ -60,19 +73,11 @@ export async function POST(request) {
       );
     }
 
-    const {
-      name,
-      title,
-      description,
-      priority,
-      assignedTo,
-      dueDate,
-      link,
-      image_url,
-    } = ticket;
+    const { name, title, description, priority, assignedTo, dueDate, link } =
+      ticket;
 
-    let user = null;
     // Verificar usuario asignado
+    let user = null;
     if (assignedTo) {
       console.log('Usuario asignado encontrado:', assignedTo);
       user = await User.findById(assignedTo);
@@ -84,7 +89,19 @@ export async function POST(request) {
       }
     }
 
-    // Crear nuevo ticket
+    // Si se recibe image procesarla
+    let image_url = null;
+    if (image) {
+      image_url = await handleImageUpload(image);
+      if (!image_url) {
+        return NextResponse.json(
+          { message: 'Error al cargar la imagen' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Crear y guardar ticket
     const newTicket = new Ticket({
       ticket: {
         name,
@@ -101,18 +118,23 @@ export async function POST(request) {
 
     const savedTicket = await newTicket.save();
     console.log('Nuevo ticket creado:', savedTicket);
-    // Enviar notificación si hay usuario asignado
-    console.log('Enviando notificación al usuario asignado:', user.email);
-    await sendNotification(
-      savedTicket,
-      user.email,
-      {
-        id: token.sub,
-        name: token.name, // Si el token incluye el nombre
-        email: token.email, // Si el token incluye el email
-      },
-      'creation'
-    );
+
+    // Enviar notificación
+    try {
+      await sendNotification(
+        savedTicket,
+        user.email,
+        {
+          id: token.sub,
+          name: token.name,
+          email: token.email,
+        },
+        'creation'
+      );
+      console.log('Notificación enviada exitosamente.');
+    } catch (error) {
+      console.error('Error al enviar notificación:', error);
+    }
 
     console.log('Ticket creado por usuario:', token.sub);
     return NextResponse.json(savedTicket, { status: 201 });

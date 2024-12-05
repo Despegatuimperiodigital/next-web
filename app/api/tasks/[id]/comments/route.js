@@ -1,10 +1,11 @@
 import mongoose from 'mongoose';
 import { connect } from '../../../../../lib/db/connect';
-import { sendNotification } from '../../../../../lib/services/notificationService';
+import { sendCommentNotification } from '../../../../../lib/services/notificationCommentService';
 import Comment from '../../../../../lib/db/models/Comment';
 import Ticket from '../../../../../lib/db/models/Ticket';
 import User from '../../../../../lib/db/models/User';
 import { getToken } from 'next-auth/jwt';
+import { handleImageUpload } from '../../../../../lib/utils/imageUpload';
 
 export async function POST(req, { params }) {
   await connect();
@@ -59,8 +60,11 @@ export async function POST(req, { params }) {
     }
     console.log('Enviando notificación a:', user.email);
 
-    // Obtener contenido del comentario
-    const { content } = await req.json();
+    // Obtener el contenido del comentario
+    const formData = await req.formData();
+    const content = formData.get('content');
+    const image = formData.get('image');
+
     if (!content) {
       return new Response(
         JSON.stringify({ message: 'El comentario no puede estar vacío' }),
@@ -68,37 +72,48 @@ export async function POST(req, { params }) {
       );
     }
 
+    // Si hay imagen procesarla
+    let imageUrl = null;
+    if (image) {
+      imageUrl = await handleImageUpload(image);
+      console.log('Imagen subida correctamente, URL:', imageUrl);
+      if (!imageUrl) {
+        return new Response(
+          JSON.stringify({ message: 'Error al procesar la imagen' }),
+          { status: 500 }
+        );
+      }
+    }
     // Crear el comentario
     const comment = new Comment({
       content,
+      imageUrl,
       author: new mongoose.Types.ObjectId(token.sub),
       ticket: ticketId,
     });
     await comment.save();
+    console.log('Comentario guardado:', comment);
 
     // Agregar comentario al ticket
     ticket.comments.push(comment._id);
     await ticket.save();
+    console.log('Ticket actualizado con el nuevo comentario:', ticket);
 
     // Enviar notificación si el ticket tiene un usuario asignado
     if (assignedTo && assignedTo.email) {
-      console.log('Enviando notificación...', assignedTo.email);
-      await sendNotification(
-        comment,
-        assignedTo.email,
-        {
+      try {
+        console.log('Enviando notificación...', assignedTo.email);
+        await sendCommentNotification(comment, assignedTo.email, {
           id: token.sub,
           name: token.name,
           email: token.email,
-        },
-        'comment_creation',
-        ticket
-      );
-      console.log('Notificación enviada exitosamente');
-    } else {
-      console.error(
-        'No se encontró un usuario asignado o no tiene correo electrónico.'
-      );
+        });
+      } catch (error) {
+        console.error(
+          'Error al enviar la notificación del comentario:',
+          error.message
+        );
+      }
     }
 
     return new Response(JSON.stringify(comment), { status: 201 });

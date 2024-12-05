@@ -2,7 +2,7 @@ import Feedback from '../../../lib/db/models/Feedback';
 import { connect } from '../../../lib/db/connect';
 import { sendFeedbackNotification } from '../../../lib/services/notificationFeedbackService';
 import { getToken } from 'next-auth/jwt';
-import { handleImageUpload } from '../../../lib/services/imageUpload';
+import { handleImageUpload } from '../../../lib/utils/imageUpload';
 
 export async function POST(request) {
   try {
