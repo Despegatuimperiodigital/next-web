@@ -1,78 +1,43 @@
 import Feedback from '../../../lib/db/models/Feedback';
-import User from '../../../lib/db/models/User';
 import { connect } from '../../../lib/db/connect';
-import { sendNotification } from '../../../lib/services/notificationService';
+import { sendFeedbackNotification } from '../../../lib/services/notificationFeedbackService';
 import { getToken } from 'next-auth/jwt';
-import fs from 'fs';
-import path from 'path';
+import { handleImageUpload } from '../../../lib/services/imageUpload';
 
 export async function POST(request) {
   try {
     await connect();
-    console.log('Conexión a la base de datos establecida correctamente');
-    const token = await getToken({ req: request });
 
-    // Verificar si el token está presente, lo que indica que el usuario está autenticado
+    const token = await getToken({ req: request });
     if (!token) {
       return new Response(
         JSON.stringify({ message: 'Usuario no autenticado' }),
         { status: 401 }
       );
     }
+
+    const userEmail = token.email;
+    console.log('Correo del usuario autenticado:', userEmail);
+
+    //Obtener datos ddel formulario
     const formData = await request.formData();
     const nombre = formData.get('nombre');
     const descripcion = formData.get('descripcion');
     const link = formData.get('link');
+    const image = formData.get('image');
+
     console.log('Form Data:', formData);
-    // Validar los campos requeridos
+
     if (!nombre || !descripcion) {
       return new Response('Nombre y descripción son requeridos', {
         status: 400,
       });
     }
 
-    let user = null;
-    user = await User.findById(token.sub);
-
+    const imagenUrl = await handleImageUpload(image);
     const fechaDeCreacion = new Date();
 
-    // Verificar si se ha recibido una imagen
-    let imagenUrl = null;
-    const image = formData.get('image');
-    console.log('Image File:', image);
-
-    if (image) {
-      try {
-        const bytes = await image.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        // Usar una ruta absoluta más robusta
-        const uploadDir = path.resolve(process.cwd(), 'public', 'uploads');
-
-        // Verificar si el directorio existe antes de crearlo
-        try {
-          await fs.promises.access(uploadDir, fs.constants.F_OK); // Verifica si existe
-        } catch (error) {
-          // Si no existe, crearlo
-          await fs.promises.mkdir(uploadDir, { recursive: true });
-          console.log('Directorio de subida creado:', uploadDir);
-        }
-
-        const imagePath = path.join(uploadDir, image.name);
-
-        // Escribir el archivo
-        await fs.promises.writeFile(imagePath, buffer);
-        console.log('Imagen guardada en:', imagePath);
-
-        // Crear la URL de la imagen
-        imagenUrl = `/uploads/${image.name}`;
-      } catch (error) {
-        console.error('Error al procesar la imagen:', error);
-        // Manejar el error según sea necesario
-      }
-    }
-
-    // Crear el nuevo feedback con la imagen si está presente
+    // Crear y guardar feedback
     const newFeedback = new Feedback({
       nombre,
       fechaDeCreacion,
@@ -84,12 +49,45 @@ export async function POST(request) {
     await newFeedback.save();
 
     // Enviar notificación
-    await sendNotification(newFeedback, user.email, 'feedback_creation');
+    try {
+      await sendFeedbackNotification(newFeedback, userEmail);
+      console.log('Notificación enviada exitosamente.');
+    } catch (error) {
+      console.error('Error al enviar notificación:', error);
+    }
 
     // Retornar el feedback creado como respuesta
     return new Response(JSON.stringify(newFeedback), { status: 201 });
   } catch (error) {
     console.error('Error en la creación de feedback:', error);
     return new Response('Error al crear feedback', { status: 500 });
+  }
+}
+
+export async function GET(req) {
+  try {
+    await connect();
+    console.log('Conexión a la base de datos establecida correctamente');
+    const { page = 1, limit = 10 } = req.nextUrl.searchParams;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const feedbacks = await Feedback.find().skip(skip).limit(parseInt(limit));
+    const totalFeedbacks = await Feedback.countDocuments();
+
+    return new Response(
+      JSON.stringify({
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalFeedbacks,
+        feedbacks,
+      }),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(error);
+    return new Response(
+      JSON.stringify({ error: 'Error al obtener feedbacks' }),
+      { status: 500 }
+    );
   }
 }
