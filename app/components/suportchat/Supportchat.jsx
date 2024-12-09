@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect,useCallback ,useRef} from 'react'
 import { X, MessageSquare, Camera, User, Calendar, Link, Send, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import html2canvas from 'html2canvas'
@@ -165,20 +166,41 @@ export default function EnhancedFeedbackButton() {
     }
   }, [isOpen])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const newReport = {
-      userName,
-      dateTime,
-      currentUrl,
-      feedback,
-      screenshot
+    
+    const formData = new FormData();
+    formData.append('nombre', userName);       
+    formData.append('descripcion', feedback);  
+    formData.append('link', currentUrl);   
+    
+    if(screenshot) {
+      formData.append('screenshot', screenshot);
     }
-    setReports([...reports, newReport])
-    console.log('Nuevo reporte agregado:', newReport)
-    setShowConfirmation(true)
-    resetForm()
-  }
+    
+    
+    
+    try {
+      // Enviar el formulario al back
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        body: formData, 
+      });
+  
+      // Verificar que la respuesta sea exitosa
+      if (!response.ok) {
+        throw new Error('Error al enviar el feedback');
+      }
+  
+      const result = await response.json();
+      console.log('Feedback enviado correctamente:', result);
+  
+      setShowConfirmation(true);
+      resetForm(); 
+    } catch (error) {
+      console.error('Error al enviar feedback:', error);
+    }
+  };
 
   const resetForm = () => {
     setFeedback('')
@@ -192,8 +214,13 @@ export default function EnhancedFeedbackButton() {
     setIsSelectingArea(true)
   }
 
+
   const captureScreenshot = async (area) => {
     try {
+      console.log('Área seleccionada para la captura:', area);
+      
+      
+      
       // Configurar opciones de html2canvas
       const options = {
         scale: window.devicePixelRatio, // Usar el DPR actual
@@ -204,12 +231,13 @@ export default function EnhancedFeedbackButton() {
         x: area.x,
         y: area.y,
         width: area.width,
-        height: area.height
+        height: area.height,
       };
-
+      
+   
       // Capturar el área específica
       const canvas = await html2canvas(document.body, options);
-      
+      console.log('Canvas capturado:', canvas);
       // Crear un canvas del tamaño exacto del área seleccionada
       const croppedCanvas = document.createElement('canvas');
       const ctx = croppedCanvas.getContext('2d');
@@ -231,11 +259,13 @@ export default function EnhancedFeedbackButton() {
           area.width,
           area.height
         );
-        
-        // Convertir a data URL
+
+         // Convertir a data URL
         const screenshotDataUrl = croppedCanvas.toDataURL('image/png');
-        setScreenshot(screenshotDataUrl);
-      }
+         setScreenshot(screenshotDataUrl);
+         console.log('Captura de pantalla (Data URL):', screenshotDataUrl);
+         
+      } 
       
       setIsSelectingArea(false);
       setIsFormVisible(true);
@@ -378,6 +408,7 @@ export default function EnhancedFeedbackButton() {
                   ) : (
                     <button
                       type="submit"
+                      onClick={handleSubmit}
                       className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-[#F7F9F8] bg-[#F33F31] hover:bg-[#E77171] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF8866] transition-colors duration-300"
                     >
                       <Send className="w-5 h-5 mr-2" />

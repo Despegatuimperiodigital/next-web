@@ -2,7 +2,10 @@ import Feedback from '../../../lib/db/models/Feedback';
 import { connect } from '../../../lib/db/connect';
 import { sendFeedbackNotification } from '../../../lib/services/notificationFeedbackService';
 import { getToken } from 'next-auth/jwt';
-import { handleImageUpload } from '../../../lib/utils/imageUpload';
+import {
+  handleImageUpload,
+  handleDataUrlUpload,
+} from '../../../lib/utils/imageUpload';
 
 export async function POST(request) {
   try {
@@ -25,6 +28,7 @@ export async function POST(request) {
     const descripcion = formData.get('descripcion');
     const link = formData.get('link');
     const image = formData.get('image');
+    const screenshot = formData.get('screenshot');
 
     console.log('Form Data:', formData);
 
@@ -35,6 +39,9 @@ export async function POST(request) {
     }
 
     const imagenUrl = await handleImageUpload(image);
+    const screenshotUrl = screenshot
+      ? await handleDataUrlUpload(screenshot)
+      : null;
     const fechaDeCreacion = new Date();
 
     // Crear y guardar feedback
