@@ -1,5 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ['puppeteer'], // Importante para que puppeteer funcione
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // No incluir puppeteer en el bundle del cliente
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        puppeteer: false,
+      };
+    }
+    return config;
+  },
   
   images: {
     domains: ['team.cloudhub.cl'],
